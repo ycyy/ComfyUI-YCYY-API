@@ -1,6 +1,6 @@
 {
     "YCYY_Gemini_Image_API": {
-        "display_name": "YCYY Gemini Image API",
+        "display_name": "Gemini Image API",
         "inputs": {
             "images": {
                 "name": "image",

@@ -1,6 +1,6 @@
 {
     "YCYY_Gemini_Image_API": {
-        "display_name": "浥尘 Gemini 图像 API",
+        "display_name": "Gemini 图像 API",
         "inputs": {
             "images": {
                 "name": "图像",

@@ -94,7 +94,7 @@ class GeminiImage(io.ComfyNode):
 
         return io.Schema(
             node_id="YCYY_Gemini_Image_API",
-            display_name="YCYY Gemini Image API",
+            display_name="Gemini Image API",
             category="YCYY/API/image",
             inputs=[
                 io.Image.Input(
