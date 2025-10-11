@@ -1,0 +1,9 @@
+{
+    "gemini-image":{
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/models",
+        "api_key": "put your key here",
+        "models": [
+            "gemini-2.5-flash-image"
+        ]
+    }
+}

@@ -3,7 +3,6 @@ import os
 import json
 import base64
 import requests
-import configparser
 import torch
 import numpy as np
 from PIL import Image
@@ -18,6 +17,70 @@ class GeminiImage(io.ComfyNode):
     """
 
     @classmethod
+    def _load_models_from_config(cls):
+        """
+        从config.json中加载模型列表
+        如果获取不到，返回默认模型列表
+        """
+        try:
+            config_path = os.path.join(os.path.dirname(__file__), "config.json")
+            if not os.path.exists(config_path):
+                return ["gemini-2.5-flash-image"]
+
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+
+            if 'gemini-image' in config and 'models' in config['gemini-image']:
+                models = config['gemini-image']['models']
+                if isinstance(models, list) and len(models) > 0:
+                    return models
+
+            return ["gemini-2.5-flash-image"]
+        except Exception:
+            return ["gemini-2.5-flash-image"]
+
+    @classmethod
+    def _load_config_credentials(cls):
+        """
+        从config.json中加载并验证API凭据
+        返回 (base_url, api_key) 元组
+        """
+        config_path = os.path.join(os.path.dirname(__file__), "config.json")
+
+        # 检查配置文件是否存在
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(f"Config file not found: {config_path}")
+
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+
+            # 检查是否存在gemini配置段
+            if 'gemini-image' not in config:
+                raise ValueError("Missing 'gemini-image' section in config file")
+
+            gemini_config = config['gemini-image']
+
+            # 获取并验证base_url
+            if 'base_url' not in gemini_config:
+                raise ValueError("Missing 'base_url' in gemini-image section")
+            base_url = gemini_config['base_url'].strip() if isinstance(gemini_config['base_url'], str) else str(gemini_config['base_url']).strip()
+            if not base_url:
+                raise ValueError("base_url cannot be empty")
+
+            # 获取并验证api_key
+            if 'api_key' not in gemini_config:
+                raise ValueError("Missing 'api_key' in gemini-image section")
+            api_key = gemini_config['api_key'].strip() if isinstance(gemini_config['api_key'], str) else str(gemini_config['api_key']).strip()
+            if not api_key:
+                raise ValueError("api_key cannot be empty")
+
+            return base_url, api_key
+
+        except Exception as e:
+            raise ValueError(f"Config loading error: {str(e)}")
+
+    @classmethod
     def define_schema(cls) -> io.Schema:
         """
             返回一个包含该节点所有信息的模式（schema）。
@@ -25,6 +88,10 @@ class GeminiImage(io.ComfyNode):
             对于输出，应使用 "io.Model.Output"，对于输入，可以使用 "io.Model.Input"。
             类型可以是 "Combo" —— 这将是一个供选择的列表。
         """
+        # 从配置文件加载模型列表
+        model_options = cls._load_models_from_config()
+        default_model = model_options[0]
+
         return io.Schema(
             node_id="YCYY_Gemini_Image_API",
             display_name="YCYY Gemini Image API",
@@ -41,8 +108,8 @@ class GeminiImage(io.ComfyNode):
                 ),
                 io.Combo.Input(
                     id="model",
-                    options=["gemini-2.5-flash-image",],
-                    default="gemini-2.5-flash-image"
+                    options=model_options,
+                    default=default_model
                 ),
                 io.Combo.Input(
                     id="aspectRatio", 
@@ -95,32 +162,10 @@ class GeminiImage(io.ComfyNode):
     # 执行 GeminiImage 节点
     @classmethod
     def execute(cls, prompt, model, aspectRatio, seed,images=None) -> io.NodeOutput:
-        config_path = os.path.join(os.path.dirname(__file__), "config.ini")
-        # 检查配置文件是否存在
-        if not os.path.exists(config_path):
-            raise FileNotFoundError(f"Config file not found: {config_path}")
-        try:
-            config = configparser.ConfigParser()
-            config.read(config_path)
-            # 检查是否存在gemini配置段
-            if not config.has_section('gemini'):
-                raise ValueError("Missing 'gemini' section in config file")
-            # 获取并验证base_url
-            if not config.has_option('gemini', 'base_url'):
-                raise ValueError("Missing 'base_url' in gemini section")
-            base_url = config.get('gemini', 'base_url').strip()
-            if not base_url:
-                raise ValueError("base_url cannot be empty")
-            # 获取并验证api_key
-            if not config.has_option('gemini', 'api_key'):
-                raise ValueError("Missing 'api_key' in gemini section")
-            api_key = config.get('gemini', 'api_key').strip()
-            if not api_key:
-                raise ValueError("api_key cannot be empty")
-        except Exception as e:
-            raise ValueError(f"Config loading error: {str(e)}")
+        # 加载配置和凭据
+        base_url, api_key = cls._load_config_credentials()
         if not prompt:
-                raise ValueError("prompt cannot be empty")
+            raise ValueError("prompt cannot be empty")
         api_url = base_url+"/"+model+":generateContent"
         if images is not None:
             return cls._edit_images(api_url,api_key,prompt,aspectRatio,seed,images)

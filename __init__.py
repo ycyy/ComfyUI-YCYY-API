@@ -1,4 +1,4 @@
-from .gemini_node import *
+from .gemini_image_node import *
 from typing_extensions import override
 
 class APIExtension(ComfyExtension):
