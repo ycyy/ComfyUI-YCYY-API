@@ -206,7 +206,7 @@ class GeminiImage(io.ComfyNode):
             return cls._parse_response(resp)
         except Exception as e:
             empty_image = cls._create_empty_image()
-            return io.NodeOutput(empty_image,"API请求失败，请检查接口地址和 KEY 是否正确")    
+            return io.NodeOutput(empty_image,f'{{"success":false,"message":"The API request failed. Please check if the interface address and key are correct."}}')    
     # 将图像张量输入转换为与 Gemini API 兼容的格式。
     @classmethod
     def _create_image_parts(cls,image_input):
@@ -257,24 +257,24 @@ class GeminiImage(io.ComfyNode):
             return cls._parse_response(resp)
         except Exception as e:
             empty_image = cls._create_empty_image()
-            return io.NodeOutput(empty_image,"API请求失败，请检查接口地址和 KEY 是否正确")
+            return io.NodeOutput(empty_image,f'{{"success":false,"message":"The API request failed. Please check if the interface address and key are correct."}}')
     # 解析response 返回内容
     @classmethod
     def _parse_response(cls,resp):
         # 检查HTTP状态码
         if resp.status_code != 200:
             empty_image = cls._create_empty_image()
-            return (empty_image,f"API请求返回错误 (状态码: {resp.status_code}):(错误原因:{resp.text})")
+            return (empty_image,f'{{"success":false,"message":"API request returns an error.status_code:{resp.status_code}.error_reason:{resp.text}"}}')
         # 检查返回内容是否为空
         if not resp.text.strip():
             empty_image = cls._create_empty_image()
-            return (empty_image,"API返回内容为空")
+            return (empty_image,f'{{"success":false,"message":"The API returns an empty content"}}')
         try:
             data = resp.json()
         except Exception as json_exception:
             # print(f"JSON解析失败：{json_exception}")
             empty_image = cls._create_empty_image()
-            return (empty_image,"API返回JSON解析失败")
+            return (empty_image,f'{{"success":false,"message":"The API returned a JSON parsing failure"}}')
         # 解析响应数据
         if "candidates" in data and data["candidates"]:
             candidate = data["candidates"][0]
@@ -295,7 +295,7 @@ class GeminiImage(io.ComfyNode):
         else:
             # print(f"未找到imag数据")
             empty_image = cls._create_empty_image()
-            return (empty_image,"未找到imag数据")
+            return (empty_image,f'{{"success":false,"message":"Imag data not found"}}')
     # 将返回的图像数据解析为 comfyui 格式的 image
     @classmethod
     def _image_data_to_comfyui_image(cls,image_date):
@@ -307,14 +307,14 @@ class GeminiImage(io.ComfyNode):
             return image_tensor
         except Exception as e:
             empty_image = cls._create_empty_image()
-            return io.NodeOutput(empty_image,"返回图像数据解析异常")
+            return io.NodeOutput(empty_image,f'{{"success":false,"message":"Return image data parsing exception"}}')
     # 获取token用量
     @classmethod
     def _format_tokens_usage(cls,usageMetadata):
         if not usageMetadata:
             return ""
         total_tokens = usageMetadata.get('totalTokenCount', '-')
-        return f"{{\"success\":true,\"total_tokens\":{total_tokens}}}"
+        return f'{{"success":true,"message":"total_tokens:{total_tokens}"}}'
     # 创建空图像
     @classmethod
     def _create_empty_image(cls):

@@ -1,0 +1,33 @@
+{
+    "YCYY_Gemini_Image_API": {
+        "display_name": "浥尘 Gemini 图像 API",
+        "inputs": {
+            "images": {
+                "name": "图像",
+                "tooltip": "可选的图像，用作模型的上下文"
+            },
+            "prompt": {
+                "name": "prompt"
+            },
+            "model": {
+                "name": "模型"
+            },
+            "aspectRatio": {
+                "name": "图像宽高比",
+                "tooltip": "该模型默认将输出图像大小与输入图像大小匹配，否则生成 1:1 正方形。您可以使用宽高比来控制输出图像的宽高比。"
+            },
+            "seed": {
+                "name": "种子",
+                "tooltip": "用于生成噪声的随机种子。"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "图像"
+            },
+            "1": {
+                "name": "字符串"
+            }
+        }
+    }
+}

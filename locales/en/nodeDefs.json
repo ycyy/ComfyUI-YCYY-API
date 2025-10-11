@@ -1,0 +1,33 @@
+{
+    "YCYY_Gemini_Image_API": {
+        "display_name": "YCYY Gemini Image API",
+        "inputs": {
+            "images": {
+                "name": "image",
+                "tooltip": "Optional image(s) to use as context for the model"
+            },
+            "prompt": {
+                "name": "prompt"
+            },
+            "model": {
+                "name": "model"
+            },
+            "aspectRatio": {
+                "name": "aspectRatio",
+                "tooltip": "The model defaults to matching the output image size to that of your input image, or otherwise generates 1:1 squares. You can control the aspect ratio of the output image using the aspect ratio"
+            },
+            "seed": {
+                "name": "seed",
+                "tooltip": "Seed to use for generation"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "Image"
+            },
+            "1": {
+                "name": "String"
+            }
+        }
+    }
+}

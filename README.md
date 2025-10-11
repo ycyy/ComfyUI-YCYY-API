@@ -1,2 +1,3 @@
 # ComfyUI-YCYY-API
-Call API in ComfyUI
+Freely call APIs in ComfyUI
+
