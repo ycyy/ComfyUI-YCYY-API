@@ -1,6 +1,7 @@
 {
     "YCYY_Gemini_Image_API": {
         "display_name": "Gemini 图像 API",
+        "description": "该节点使用 Google Gemini 图像 API 生成或修改图像",
         "inputs": {
             "images": {
                 "name": "图像",
@@ -29,5 +30,29 @@
                 "name": "字符串"
             }
         }
+    },
+    "YCYY_Gemini_Image_Preset":{
+        "display_name": "Gemini 图像预设",
+        "description": "该节点为 Gemini 图像 API 提供预设值",
+        "inputs": {
+            "preset":{
+                "name": "预设名称",
+                "tooltip": "预设名称"
+            },
+            "description":{
+                "name": "预设描述",
+                "tooltip": "预设描述"
+            },
+            "prompt":{
+                "name": "预设提示词",
+                "tooltip": "预设提示词"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "字符串"
+            }
+        }
+
     }
 }

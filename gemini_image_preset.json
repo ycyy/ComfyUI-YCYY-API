@@ -1,0 +1,117 @@
+[
+    {
+        "title": "👨‍💼3D手办",
+        "description": "将你的照片变成可收藏的3D角色手办，配有完整的包装。",
+        "prompt": "turn this photo into a character figure. Behind it, place a box with the character’s image printed on it, and a computer showing the Blender modeling process on its screen. In front of the box, add a round plastic base with the character figure standing on it. set the scene indoors if possible"
+    },
+    {
+        "title": "🧶钩针娃娃",
+        "description": "将您的图像变成一个柔软的手工钩针娃娃。",
+        "prompt": "Transform the subject into a handmade crocheted yarn doll with a cute, chibi-style appearance."
+    },
+    {
+        "title": "💃姿势参考",
+        "description": "将一张图像中的姿势应用到另一张图像中的角色上。",
+        "prompt": "Apply the pose from the second image to the character in the first image. Render as a professional studio photograph."
+    },
+    {
+        "title": "🏞️光影参考",
+        "description": "将一张图像中的光影应用到另一张图像上。",
+        "prompt": "图一换成图二打光，专业摄影"
+    },
+    {
+        "title": "📸时尚杂志",
+        "description": "为您的照片赋予高级时尚、编辑风格的外观，堪比杂志封面。",
+        "prompt": "Transform the photo into a stylized, ultra-realistic fashion magazine portrait with cinematic lighting."
+    },
+    {
+        "title": "💡产品渲染",
+        "description": "将产品草图变成专业的、照片级的3D渲染图。",
+        "prompt": "Turn this product sketch into a photorealistic 3D render with studio lighting."
+    },
+    {
+        "title": "🗿黏土动画",
+        "description": "将您的图像重现为一个迷人的定格黏土场景。",
+        "prompt": "Recreate the image as a charming stop-motion claymation scene."
+    },
+    {
+        "title": "🔶低多边形",
+        "description": "使用低多边形几何网格重建您的图像。",
+        "prompt": "Reconstruct the image using a low-polygon geometric mesh."
+    },
+    {
+        "title": "⚙️蒸汽朋克",
+        "description": "用齿轮、黄铜和维多利亚时代的技术重新想象您的主题。",
+        "prompt": "Reimagine the subject with steampunk aesthetics, featuring gears, brass, and Victorian-era technology."
+    },
+    {
+        "title": "🌌线稿艺术",
+        "description": "将您的照片简化为其基本线条，创建一个干净的草图。",
+        "prompt": "Turn the image into a clean, hand-drawn line art sketch."
+    },
+    {
+        "title": "👾像素艺术",
+        "description": "将您的图像转换为复古的8位像素艺术。",
+        "prompt": "Redraw the image in a retro 8-bit pixel art style."
+    },
+    {
+        "title": "🖌️水彩艺术",
+        "description": "将您的图像转换为柔和、充满活力的水彩画。",
+        "prompt": "Transform the image into a soft and vibrant watercolor painting."
+    },
+    {
+        "title": "🎨波普艺术",
+        "description": "以安迪·沃霍尔的大胆风格重新想象您的图像。",
+        "prompt": "Reimagine the image in the style of Andy Warhol's pop art, with bold colors and screen-print effects."
+    },
+    {
+        "title": "✏️涂鸦艺术",
+        "description": "在您的图像上覆盖好玩的手绘涂鸦。",
+        "prompt": "Overlay the image with playful, hand-drawn doodle-style illustrations."
+    },
+    {
+        "title": "🐉奇幻艺术",
+        "description": "将您的图像转变为一幅史诗般的奇幻风格绘画。",
+        "prompt": "Transform the image into an epic fantasy-style painting, with magical elements and dramatic lighting."
+    },
+    {
+        "title": "🖼️矢量艺术",
+        "description": "将您的照片转换为干净、可缩放的矢量艺术。",
+        "prompt": "Convert the photo into clean, scalable vector art with flat colors and sharp lines."
+    },
+    {
+        "title": "✂️折纸艺术",
+        "description": "用折纸风格重建您的主题。",
+        "prompt": "Reconstruct the subject of the image using folded paper in an origami style."
+    },
+    {
+        "title": "🏜️沙画艺术",
+        "description": "重新创作您的图像，仿佛它是由彩色沙子制成的。",
+        "prompt": "Recreate the image as if it were made from colored sand."
+    },
+    {
+        "title": "👨‍🔧乐高小人仔",
+        "description": "为你的主体制作一个乐高小人仔，准备好玩耍。",
+        "prompt": "Transform the person into a LEGO minifigure, inside its packaging box."
+    },
+    {
+        "title": "🥤汽水罐设计",
+        "description": "将您的图像包装到汽水罐上，并将其放置在精美的产品照片中。",
+        "prompt": "Design a soda can using this image as the main graphic, and show it in a professional product shot."
+    },
+    {
+        "title": "🧸可爱毛绒玩具",
+        "description": "将您的主题转换成一个可爱的、柔软的毛绒玩具。",
+        "prompt": "Turn the person in this photo into a cute, soft plushie doll."
+    },
+    {
+        "title": "🔑亚克力钥匙扣",
+        "description": "创建一个您的主题的可爱亚克力钥匙扣，非常适合挂在包上。",
+        "prompt": "Turn the subject into a cute acrylic keychain, shown attached to a bag."
+    },
+    {
+        "title": "🎭动漫转Cosplay",
+        "description": "将动漫角色变为一张逼真的Cosplay照片。",
+        "prompt": "Generate a highly detailed, realistic photo of a person cosplaying the character in this illustration. Replicate the pose, expression, and framing."
+    }
+]

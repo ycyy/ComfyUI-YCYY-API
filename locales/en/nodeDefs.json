@@ -29,5 +29,29 @@
                 "name": "String"
             }
         }
+    },
+    "YCYY_Gemini_Image_Preset":{
+        "display_name": "Gemini Image Preset",
+        "description": "This node provides presets for the Gemini Image API.",
+        "inputs": {
+            "preset":{
+                "name": "preset",
+                "tooltip": "Gemini image preset name"
+            },
+            "description":{
+                "name": "description",
+                "tooltip": "Gemini image preset description"
+            },
+            "prompt":{
+                "name": "prompt",
+                "tooltip": "Gemini image preset prompt"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "String"
+            }
+        }
+
     }
 }

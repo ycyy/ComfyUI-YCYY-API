@@ -334,5 +334,3 @@ from server import PromptServer
 @PromptServer.instance.routes.get("/hello")
 async def get_hello(request):
     return web.json_response("hello")
-
-
