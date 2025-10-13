@@ -9,7 +9,7 @@ from PIL import Image
 from io import BytesIO
 from typing_extensions import override
 from comfy_api.latest import ComfyExtension, io
-from .image_utils import tensor_to_base64_string
+from ..utils.image_utils import tensor_to_base64_string
 
 class GeminiImage(io.ComfyNode):
     """
