@@ -22,7 +22,7 @@ def tensor_to_base64_string(
     """
     pil_image = tensor_to_pil(image_tensor)
     # pil_image = _tensor_to_pil(image_tensor, total_pixels=total_pixels)
-    img_byte_arr = _pil_to_bytesio(pil_image, mime_type=mime_type)
+    img_byte_arr = pil_to_bytesio(pil_image, mime_type=mime_type)
     img_bytes = img_byte_arr.getvalue()
     # Encode bytes to base64 string
     base64_encoded_string = base64.b64encode(img_bytes).decode("utf-8")
@@ -55,7 +55,7 @@ def _tensor_to_pil(image: torch.Tensor, total_pixels: int = 2048 * 2048) -> Imag
     img = Image.fromarray(image_np)
     return img
 
-def _pil_to_bytesio(img: Image.Image, mime_type: str = "image/png") -> io.BytesIO:
+def pil_to_bytesio(img: Image.Image, mime_type: str = "image/png") -> io.BytesIO:
     """Converts a PIL Image to a BytesIO object."""
     if not mime_type:
         mime_type = "image/png"
