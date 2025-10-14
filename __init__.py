@@ -1,5 +1,5 @@
-from gemini.gemini_image_node import *
-from gemini.gemini_image_preset_node import *
+from .gemini.gemini_image_node import *
+from .gemini.gemini_image_preset_node import *
 from typing_extensions import override
 
 class APIExtension(ComfyExtension):

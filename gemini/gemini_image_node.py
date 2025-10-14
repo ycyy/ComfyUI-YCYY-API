@@ -1,5 +1,6 @@
 import io
 import os
+import sys
 import json
 import base64
 import requests
@@ -23,7 +24,7 @@ class GeminiImage(io.ComfyNode):
         如果获取不到，返回默认模型列表
         """
         try:
-            config_path = os.path.join(os.path.dirname(__file__), "config.json")
+            config_path = os.path.join(os.path.dirname(__file__), '..', "config.json")
             if not os.path.exists(config_path):
                 return ["gemini-2.5-flash-image"]
 
@@ -45,7 +46,7 @@ class GeminiImage(io.ComfyNode):
         从config.json中加载并验证API凭据
         返回 (base_url, api_key) 元组
         """
-        config_path = os.path.join(os.path.dirname(__file__), "config.json")
+        config_path = os.path.join(os.path.dirname(__file__), '..',  "config.json")
 
         # 检查配置文件是否存在
         if not os.path.exists(config_path):
