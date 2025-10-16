@@ -52,6 +52,23 @@
                 "name": "String"
             }
         }
-
+    },
+    "YCYY_Ollama_VLM_API":{
+        "display_name": "Ollama VLM API",
+        "description": "This node uses the Ollama VLM model for image reasoning and analysis.",
+        "inputs": {
+            "image":{
+                "name": "image",
+                "tooltip": "Image used for analysis"
+            },
+            "model": {
+                "name": "model"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "String"
+            }
+        }
     }
 }

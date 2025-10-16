@@ -53,6 +53,23 @@
                 "name": "字符串"
             }
         }
-
+    },
+    "YCYY_Ollama_VLM_API":{
+        "display_name": "Ollama 视觉 API",
+        "description": "这个节点使用Ollama VLM 模型进行图片推理分析",
+        "inputs": {
+            "image":{
+                "name": "图像",
+                "tooltip": "用于分析的图像"
+            },
+            "model": {
+                "name": "模型"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "字符串"
+            }
+        }
     }
 }
