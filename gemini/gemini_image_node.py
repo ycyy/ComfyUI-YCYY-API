@@ -44,7 +44,7 @@ class GeminiImage(io.ComfyNode):
     def _load_config_credentials(cls):
         """
         从config.json中加载并验证API凭据
-        返回 (base_url, api_key) 元组
+        返回 (base_url, api_key, timeout) 元组
         """
         config_path = os.path.join(os.path.dirname(__file__), '..',  "config.json")
 
@@ -76,7 +76,15 @@ class GeminiImage(io.ComfyNode):
             if not api_key:
                 raise ValueError("api_key cannot be empty")
 
-            return base_url, api_key
+            # 获取timeout参数，默认值为120秒
+            timeout = gemini_config.get('timeout', 120)
+            if isinstance(timeout, str):
+                try:
+                    timeout = int(timeout)
+                except ValueError:
+                    timeout = 120
+
+            return base_url, api_key, timeout
 
         except Exception as e:
             raise ValueError(f"Config loading error: {str(e)}")
@@ -164,17 +172,17 @@ class GeminiImage(io.ComfyNode):
     @classmethod
     def execute(cls, prompt, model, aspectRatio, seed,images=None) -> io.NodeOutput:
         # 加载配置和凭据
-        base_url, api_key = cls._load_config_credentials()
+        base_url, api_key, timeout = cls._load_config_credentials()
         if not prompt:
             raise ValueError("prompt cannot be empty")
         api_url = base_url+"/"+model+":generateContent"
         if images is not None:
-            return cls._edit_images(api_url,api_key,prompt,aspectRatio,seed,images)
+            return cls._edit_images(api_url,api_key,prompt,aspectRatio,seed,images,timeout)
         else:
-            return cls._generate_images(api_url,api_key,prompt,aspectRatio,seed)
+            return cls._generate_images(api_url,api_key,prompt,aspectRatio,seed,timeout)
     # 图生图模式
     @classmethod
-    def _edit_images(cls,api_url,api_key,prompt,aspectRatio,seed,images)-> io.NodeOutput:
+    def _edit_images(cls,api_url,api_key,prompt,aspectRatio,seed,images,timeout)-> io.NodeOutput:
         image_parts = cls._create_image_parts(images)
         image_parts.append(
             {
@@ -203,7 +211,7 @@ class GeminiImage(io.ComfyNode):
         # print(f"正在请求Gemini文生图API: {api_url}")
         # print(f"请求载荷: {json.dumps(payload)}")
         try:
-            resp = requests.post(api_url, headers=headers, json=payload, timeout=120)
+            resp = requests.post(api_url, headers=headers, json=payload, timeout=timeout)
             return cls._parse_response(resp)
         except Exception as e:
             empty_image = cls._create_empty_image()
@@ -227,7 +235,7 @@ class GeminiImage(io.ComfyNode):
         return image_parts
     # 文生图模式
     @classmethod
-    def _generate_images(cls,api_url,api_key,prompt,aspectRatio,seed)-> io.NodeOutput:
+    def _generate_images(cls,api_url,api_key,prompt,aspectRatio,seed,timeout)-> io.NodeOutput:
         headers = {
             "x-goog-api-key": api_key,
             "Content-Type": "application/json"
@@ -254,7 +262,7 @@ class GeminiImage(io.ComfyNode):
         # print(f"正在请求Gemini文生图API: {api_url}")
         # print(f"请求载荷: {json.dumps(payload)}")
         try:
-            resp = requests.post(api_url, headers=headers, json=payload, timeout=120)
+            resp = requests.post(api_url, headers=headers, json=payload, timeout=timeout)
             return cls._parse_response(resp)
         except Exception as e:
             empty_image = cls._create_empty_image()

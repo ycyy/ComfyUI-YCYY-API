@@ -2,8 +2,17 @@
     "gemini-image":{
         "base_url": "https://generativelanguage.googleapis.com/v1beta/models",
         "api_key": "put your key here",
+        "timeout": 120,
         "models": [
             "gemini-2.5-flash-image"
+        ]
+    },
+    "ollama-vlm": {
+        "base_url": "https://ollama.com",
+        "api_key": "",
+        "timeout": 120,
+        "models": [
+            "qwen3-vl:235b"
         ]
     }
 }
