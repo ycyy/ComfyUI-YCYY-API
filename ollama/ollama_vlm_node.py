@@ -76,6 +76,11 @@ class OllamaVLM(io.ComfyNode):
                 io.String.Input(
                     id="user_prompt",
                     multiline=True,
+                ),
+                io.Combo.Input(
+                    id="model",
+                    options=model_options,
+                    default=default_model
                 )
             ],
             outputs=[

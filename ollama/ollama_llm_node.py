@@ -84,11 +84,13 @@ class OllamaLLM(io.ComfyNode):
             outputs=[
                 io.String.Output(
                     id="Result",
-                    display_name="Result"
+                    display_name="Result",
+                    tooltip="Return result"
                 ),
                 io.String.Output(
-                    id="history_conversation",
-                    display_name="History Conversation"
+                    id="conversation",
+                    display_name="Conversation",
+                    tooltip="All historical conversation"
                 )
             ],
             description="This node uses the Ollama LLM model for conversation."
