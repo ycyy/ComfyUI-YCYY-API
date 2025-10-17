@@ -8,7 +8,7 @@
         ]
     },
     "ollama-vlm": {
-        "base_url": "https://ollama.com",
+        "base_url": "https://ollama.com/v1/chat/completions",
         "api_key": "",
         "timeout": 120,
         "models": [
@@ -16,7 +16,7 @@
         ]
     },
     "ollama-llm": {
-        "base_url": "https://ollama.com",
+        "base_url": "https://ollama.com/v1/chat/completions",
         "api_key": "",
         "timeout": 120,
         "models": [

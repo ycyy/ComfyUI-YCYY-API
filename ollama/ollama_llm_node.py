@@ -102,7 +102,7 @@ class OllamaLLM(io.ComfyNode):
             raise ValueError("User prompt cannot be empty")
 
         base_url, api_key, timeout = _load_config_credentials()
-        api_url = base_url+"/api/chat"
+        api_url = base_url
 
         # 生成会话标识符（基于模型和系统提示词）
         session_key = f"{model}_{hash(system_prompt) if system_prompt else 'no_system'}"
@@ -175,29 +175,43 @@ class OllamaLLM(io.ComfyNode):
         except Exception as json_exception:
             # print(f"JSON解析失败：{json_exception}")
             raise ValueError(f'The API returned a JSON parsing failure')
-        # 解析响应数据
-        if "message" in data and data["message"]:
-            message = data.get("message", {})
-            content = message.get("content", "")
 
-            # 如果启用了上下文持久化，将助手的回复添加到历史记录
-            if persist_context and session_key in cls._conversation_history:
-                cls._conversation_history[session_key].append({
-                    "role": "assistant",
-                    "content": content
-                })
+        # 解析响应数据 - OpenAI兼容接口格式
+        if "choices" not in data:
+            raise ValueError(f'Missing "choices" field in API response')
 
-            # 获取历史对话记录并转换为JSON字符串
-            history_conversation = ""
-            if persist_context and session_key in cls._conversation_history:
-                history_conversation = json.dumps(cls._conversation_history[session_key], ensure_ascii=False)
-            else:
-                history_conversation = "[]"
+        choices = data["choices"]
+        if not choices or not isinstance(choices, list) or len(choices) == 0:
+            raise ValueError(f'Empty or invalid "choices" array in API response')
 
-            # 返回当前内容和历史对话JSON字符串
-            return io.NodeOutput(content, history_conversation)
+        first_choice = choices[0]
+        if not isinstance(first_choice, dict):
+            raise ValueError(f'Invalid choice format in API response')
+
+        message = first_choice.get("message", {})
+        if not message:
+            raise ValueError(f'Missing "message" field in API response')
+
+        content = message.get("content", "")
+        if not content:
+            raise ValueError(f'Empty content in API response')
+
+        # 如果启用了上下文持久化，将助手的回复添加到历史记录
+        if persist_context and session_key in cls._conversation_history:
+            cls._conversation_history[session_key].append({
+                "role": "assistant",
+                "content": content
+            })
+
+        # 获取历史对话记录并转换为JSON字符串
+        history_conversation = ""
+        if persist_context and session_key in cls._conversation_history:
+            history_conversation = json.dumps(cls._conversation_history[session_key], ensure_ascii=False)
         else:
-            raise ValueError(f'Content data not found')
+            history_conversation = "[]"
+
+        # 返回当前内容和历史对话JSON字符串
+        return io.NodeOutput(content, history_conversation)
 
 # 设置 web 目录，该目录中的任何 .js 文件都将被前端加载为前端扩展
 # WEB_DIRECTORY = "./somejs"

@@ -111,7 +111,7 @@ class OllamaVLM(io.ComfyNode):
             raise ValueError("User prompt cannot be empty")
 
         base_url, api_key, timeout = _load_config_credentials()
-        api_url = base_url+"/api/chat"
+        api_url = base_url
         payload = {
             "model": model,
             "messages": [],
@@ -126,8 +126,16 @@ class OllamaVLM(io.ComfyNode):
         image_base64 = tensor_to_base64_string(image)
         user_message  ={
             "role": "user",
-            "content": user_prompt,
-            "images":[image_base64]
+            "content": [
+                {
+                    "type": "text",
+                    "text": user_prompt
+                },
+                {
+                    "type": "image_url",
+                    "image_url": f"data:image/png;base64,{image_base64}"
+                }
+            ]
         }
         payload["messages"].append(user_message)
         try:
@@ -141,7 +149,7 @@ class OllamaVLM(io.ComfyNode):
             print(resp)
             return cls._parse_response(resp)
         except Exception as e:
-            raise ValueError(f'The API request failed:'+{e})
+            raise ValueError(f'The API request failed:{e}')
     # 解析response 返回内容
     @classmethod
     def _parse_response(cls,resp):
@@ -156,13 +164,27 @@ class OllamaVLM(io.ComfyNode):
         except Exception as json_exception:
             # print(f"JSON解析失败：{json_exception}")
             raise ValueError(f'The API returned a JSON parsing failure')
-        # 解析响应数据
-        if "message" in data and data["message"]:
-            message = data.get("message", {})
-            content = message.get("content","")
-            return io.NodeOutput(content)
-        else:
-            raise ValueError(f'Content data not found')
+        # 解析响应数据 - OpenAI兼容接口格式
+        if "choices" not in data:
+            raise ValueError(f'Missing "choices" field in API response')
+
+        choices = data["choices"]
+        if not choices or not isinstance(choices, list) or len(choices) == 0:
+            raise ValueError(f'Empty or invalid "choices" array in API response')
+
+        first_choice = choices[0]
+        if not isinstance(first_choice, dict):
+            raise ValueError(f'Invalid choice format in API response')
+
+        message = first_choice.get("message", {})
+        if not message:
+            raise ValueError(f'Missing "message" field in API response')
+
+        content = message.get("content", "")
+        if not content:
+            raise ValueError(f'Empty content in API response')
+
+        return io.NodeOutput(content)
 
 # 设置 web 目录，该目录中的任何 .js 文件都将被前端加载为前端扩展
 # WEB_DIRECTORY = "./somejs"
