@@ -70,5 +70,34 @@
                 "name": "String"
             }
         }
+    },
+    "YCYY_Ollama_LLM_API":{
+        "display_name": "Ollama LLM API",
+        "description": "This node uses the Ollama LLM model for conversation.",
+        "inputs": {
+            "system_prompt":{
+                "name": "system_prompt"
+            },
+            "user_prompt":{
+                "name": "user_prompt"
+            },
+            "model": {
+                "name": "model"
+            },
+            "persist_context": {
+                "name": "persist_context",
+                "tooltip": "Persist chat context between calls (multi-turn conversation)"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "Result",
+                "tooltip": "Return result"
+            },
+            "1": {
+                "name": "Conversation",
+                "tooltip": "All historical conversation"
+            }
+        }
     }
 }

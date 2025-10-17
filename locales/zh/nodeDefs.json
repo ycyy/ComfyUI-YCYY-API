@@ -71,5 +71,34 @@
                 "name": "字符串"
             }
         }
+    },
+   "YCYY_Ollama_LLM_API":{
+        "display_name": "Ollama 语言 API",
+        "description": "该节点使用 Ollama 大语言模型进行对话",
+        "inputs": {
+            "system_prompt":{
+                "name": "system_prompt"
+            },
+            "user_prompt":{
+                "name": "user_prompt"
+            },
+            "model": {
+                "name": "模型"
+            },
+            "persist_context": {
+                "name": "持久化上下文",
+                "tooltip": "在调用之间保留聊天上下文（多轮对话）"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "结果",
+                "tooltip": "返回结果"
+            },
+            "1": {
+                "name": "上下文",
+                "tooltip": "所有历史对话"
+            }
+        }
     }
 }

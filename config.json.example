@@ -14,5 +14,17 @@
         "models": [
             "qwen3-vl:235b"
         ]
+    },
+    "ollama-llm": {
+        "base_url": "https://ollama.com",
+        "api_key": "",
+        "timeout": 120,
+        "models": [
+            "glm-4.6",
+            "kimi-k2:1t",
+            "qwen3-coder:480b",
+            "deepseek-v3.1:671b",
+            "gpt-oss:120b"
+        ]
     }
 }
