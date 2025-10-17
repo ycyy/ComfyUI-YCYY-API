@@ -11,35 +11,8 @@ from io import BytesIO
 from typing_extensions import override
 from comfy_api.latest import ComfyExtension, io
 from ..utils.image_utils import tensor_to_base64_string
-from ..utils.config_utils import get_config_section
+from ..utils.config_utils import get_config_section,get_models_list
 
-
-def _load_ollama_vlm_models():
-    """
-    从config.json中加载ollama-vlm配置并获取模型列表
-    """
-    try:
-        ollama_vlm_config = get_config_section('ollama-vlm')
-
-        # 验证配置是否存在
-        if not ollama_vlm_config:
-            raise ValueError("Missing 'ollama-vlm' section in config file")
-
-        # 直接获取models列表
-        if 'models' not in ollama_vlm_config:
-            raise ValueError("Missing 'models' in ollama-vlm section")
-
-        models = ollama_vlm_config['models']
-
-        # 验证models是否为列表且不为空
-        if not isinstance(models, list):
-            raise ValueError("'models' must be a list")
-
-        if not models:
-            raise ValueError("'models' list cannot be empty")
-        return models
-    except Exception as e:
-        raise ValueError(f"Failed to load Ollama VLM models: {str(e)}")
 
 def _load_config_credentials():
     """
@@ -85,7 +58,7 @@ class OllamaVLM(io.ComfyNode):
             类型可以是 "Combo" —— 这将是一个供选择的列表。
         """
         # 从配置文件加载模型列表
-        model_options = _load_ollama_vlm_models()
+        model_options = get_models_list("ollama-vlm")
         default_model = model_options[0]
         return io.Schema(
             node_id="YCYY_Ollama_VLM_API",
@@ -95,11 +68,6 @@ class OllamaVLM(io.ComfyNode):
                 io.Image.Input(
                     "image",
                     tooltip="Image used for analysis"
-                ),
-                io.Combo.Input(
-                    id="model",
-                    options=model_options,
-                    default=default_model
                 ),
                 io.String.Input(
                     id="system_prompt",

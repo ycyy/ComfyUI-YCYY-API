@@ -29,3 +29,26 @@ def get_config_section(section_key):
         return config.get(section_key, None)
     except Exception:
         return None
+# 根据配置段 key 获取模型列表
+def get_models_list(section_key):
+    try:
+        section_config = get_config_section(section_key)
+        # 验证配置是否存在
+        if not section_config:
+            raise ValueError(f"Missing {section_key} section in config file")
+
+        # 直接获取models列表
+        if 'models' not in section_config:
+            raise ValueError("Missing 'models' in section")
+
+        models = section_config['models']
+
+        # 验证models是否为列表且不为空
+        if not isinstance(models, list):
+            raise ValueError("'models' must be a list")
+
+        if not models:
+            raise ValueError("'models' list cannot be empty")
+        return models
+    except Exception as e:
+        raise ValueError(f"Failed to load models: {str(e)}")
