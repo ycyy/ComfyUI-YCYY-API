@@ -73,7 +73,7 @@
         }
     },
    "YCYY_Ollama_LLM_API":{
-        "display_name": "Ollama 语言 API",
+        "display_name": "Ollama 文本 API",
         "description": "该节点使用 Ollama 大语言模型进行对话",
         "inputs": {
             "system_prompt":{
