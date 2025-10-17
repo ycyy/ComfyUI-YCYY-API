@@ -157,7 +157,7 @@ class OllamaLLM(io.ComfyNode):
                 resp = requests.post(api_url, headers=headers, json=payload, timeout=timeout)
             else:
                 resp = requests.post(api_url, json=payload, timeout=timeout)
-            print(resp)
+                
             return cls._parse_response(resp, persist_context, session_key)
         except Exception as e:
             raise ValueError(f'The API request failed:'+{e})
