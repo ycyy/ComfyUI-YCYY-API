@@ -61,6 +61,11 @@ class OllamaLLM(io.ComfyNode):
             display_name="Ollama LLM API",
             category="YCYY/API/text",
             inputs=[
+                io.AnyType.Input(
+                    id="advanced_options",
+                    optional=True,
+                    tooltip="Optional configuration for the model.Accepts inputs from the Ollama LLM Advanced Options node."
+                ),
                 io.String.Input(
                     id="system_prompt",
                     multiline=True,
@@ -95,9 +100,42 @@ class OllamaLLM(io.ComfyNode):
             ],
             description="This node uses the Ollama LLM model for conversation."
         )
+    @classmethod
+    def _apply_advanced_options(cls, payload, advanced_options):
+        """
+        根据 advanced_options 的属性添加高级参数到 payload
+
+        Args:
+            payload: 基础的 API 请求 payload
+            advanced_options: 从 Ollama LLM Advanced Options 节点传入的高级选项字典
+
+        Returns:
+            更新后的 payload
+        """
+        if not advanced_options or not isinstance(advanced_options, dict):
+            return payload
+
+        # 如果启用了 max_tokens，添加到 payload
+        if advanced_options.get("enable_max_tokens", False) and "max_tokens" in advanced_options:
+            payload["max_tokens"] = advanced_options["max_tokens"]
+
+        # 如果启用了 temperathinkture，添加到 payload
+        if advanced_options.get("enable_temperature", False) and "temperature" in advanced_options:
+            payload["temperature"] = advanced_options["temperature"]
+
+        # 如果启用了 top_p，添加到 payload
+        if advanced_options.get("enable_top_p", False) and "top_p" in advanced_options:
+            payload["top_p"] = advanced_options["top_p"]
+
+        # 如果启用了 thinking，添加到 payload
+        if advanced_options.get("enable_thinking", False):
+            payload["think"] = True
+
+        return payload
+
     # 执行 OllamaLLM 节点
     @classmethod
-    def execute(cls, system_prompt, user_prompt, model, persist_context) -> io.NodeOutput:
+    def execute(cls, system_prompt, user_prompt, model, persist_context,advanced_options=None) -> io.NodeOutput:
         if not user_prompt:
             raise ValueError("User prompt cannot be empty")
 
@@ -149,6 +187,9 @@ class OllamaLLM(io.ComfyNode):
             "stream": False
         }
 
+        # 根据 advanced_options 添加高级参数
+        payload = cls._apply_advanced_options(payload, advanced_options)
+
         try:
             if api_key:
                 headers = {
@@ -160,7 +201,7 @@ class OllamaLLM(io.ComfyNode):
                 
             return cls._parse_response(resp, persist_context, session_key)
         except Exception as e:
-            raise ValueError(f'The API request failed:'+{e})
+            raise ValueError(f'The API request failed:{e}')
     # 解析response 返回内容
     @classmethod
     def _parse_response(cls, resp, persist_context, session_key):
