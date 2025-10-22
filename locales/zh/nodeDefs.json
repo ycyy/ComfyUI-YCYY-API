@@ -76,6 +76,10 @@
         "display_name": "Ollama 文本 API",
         "description": "该节点使用 Ollama 大语言模型进行对话",
         "inputs": {
+            "advanced_options":{
+                "name": "高级选项",
+                "tooltip": "模型的高级选项（可选）,接受来自 Ollama 文本高级选项节点的输入。"
+            },
             "system_prompt":{
                 "name": "system_prompt"
             },
@@ -98,6 +102,43 @@
             "1": {
                 "name": "上下文",
                 "tooltip": "所有历史对话"
+            }
+        }
+    },
+    "YCYY_Ollama_LLM_Advanced_Options":{
+        "display_name": "Ollama 文本高级选项",
+        "description": "该节点为 ollama 大语言模型提供了高级选项。",
+        "inputs": {           
+            "max_tokens":{
+                "name": "max_tokens"
+            },
+            "temperature":{
+                "name": "temperature"
+            },
+            "top_p":{
+                "name": "top_p"
+            },
+            "enable_max_tokens": {
+                "name": "enable_max_tokens",
+                "tooltip": "是否启用 max_tokens"
+            },
+            "enable_temperature": {
+                "name": "enable_temperature",
+                "tooltip": "是否启用 temperature"
+            },
+            "enable_top_p": {
+                "name": "enable_top_p",
+                "tooltip": "是否启用 top_p"
+            },
+            "enable_thinking": {
+                "name": "enable_thinking",
+                "tooltip": "是否启用 thinking"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "高级选项",
+                "tooltip": "模型的高级选项。"
             }
         }
     }

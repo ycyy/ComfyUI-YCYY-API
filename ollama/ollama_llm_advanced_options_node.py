@@ -109,7 +109,7 @@ class OllamaLLMAdvanceOptions(io.ComfyNode):
                     tooltip="Optional configuration for the model."
                 )
             ],
-            description="This node uses the Ollama LLM model for conversation."
+            description="This node provides advanced options for the ollama LLM model."
         )
     # 执行 OllamaLLM 节点
     @classmethod

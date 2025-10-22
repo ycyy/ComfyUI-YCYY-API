@@ -74,7 +74,11 @@
     "YCYY_Ollama_LLM_API":{
         "display_name": "Ollama LLM API",
         "description": "This node uses the Ollama LLM model for conversation.",
-        "inputs": {
+        "inputs": {           
+            "advanced_options":{
+                "name": "advanced_options",
+                "tooltip": "Optional configuration for the model.Accepts inputs from the Ollama LLM Advanced Options node."
+            },
             "system_prompt":{
                 "name": "system_prompt"
             },
@@ -97,6 +101,43 @@
             "1": {
                 "name": "Conversation",
                 "tooltip": "All historical conversation"
+            }
+        }
+    },
+    "YCYY_Ollama_LLM_Advanced_Options":{
+        "display_name": "Ollama LLM Advanced Options",
+        "description": "This node provides advanced options for the ollama LLM model.",
+        "inputs": {           
+            "max_tokens":{
+                "name": "max_tokens"
+            },
+            "temperature":{
+                "name": "temperature"
+            },
+            "top_p":{
+                "name": "top_p"
+            },
+            "enable_max_tokens": {
+                "name": "enable_max_tokens",
+                "tooltip": "Whether to enable max tokens"
+            },
+            "enable_temperature": {
+                "name": "enable_temperature",
+                "tooltip": "Whether to enable temperature"
+            },
+            "enable_top_p": {
+                "name": "enable_top_p",
+                "tooltip": "Whether to enable top_p"
+            },
+            "enable_thinking": {
+                "name": "enable_thinking",
+                "tooltip": "Whether to enable thinking"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "advanced_options",
+                "tooltip": "Advanced options for the model."
             }
         }
     }
