@@ -57,9 +57,9 @@
         "display_name": "Ollama VLM API",
         "description": "This node uses the Ollama VLM model for image reasoning and analysis.",
         "inputs": {
-            "image":{
-                "name": "image",
-                "tooltip": "Image used for analysis"
+            "images":{
+                "name": "images",
+                "tooltip": "Images used for analysis"
             },
             "model": {
                 "name": "model"

@@ -66,7 +66,7 @@ class OllamaVLM(io.ComfyNode):
             category="YCYY/API/text",
             inputs=[
                 io.Image.Input(
-                    "image",
+                    "images",
                     tooltip="Image used for analysis"
                 ),
                 io.String.Input(
@@ -106,7 +106,7 @@ class OllamaVLM(io.ComfyNode):
     #         return []
     # 执行 GeminiImage 节点
     @classmethod
-    def execute(cls,image, system_prompt, user_prompt, model) -> io.NodeOutput:
+    def execute(cls,images, system_prompt, user_prompt, model) -> io.NodeOutput:
         if not user_prompt:
             raise ValueError("User prompt cannot be empty")
 
@@ -123,19 +123,27 @@ class OllamaVLM(io.ComfyNode):
                 "content": system_prompt
             }
             payload["messages"].append(system_message)
-        image_base64 = tensor_to_base64_string(image)
-        user_message  ={
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": user_prompt
-                },
-                {
+
+        # 构建用户消息内容，支持多个图片
+        content = [
+            {
+                "type": "text",
+                "text": user_prompt
+            }
+        ]
+
+        # 处理多个图片
+        if images is not None:
+            for image_index in range(images.shape[0]):
+                image_base64 = tensor_to_base64_string(images[image_index].unsqueeze(0))
+                content.append({
                     "type": "image_url",
                     "image_url": f"data:image/png;base64,{image_base64}"
-                }
-            ]
+                })
+
+        user_message = {
+            "role": "user",
+            "content": content
         }
         payload["messages"].append(user_message)
         try:

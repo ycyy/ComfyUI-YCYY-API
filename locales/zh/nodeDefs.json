@@ -58,9 +58,9 @@
         "display_name": "Ollama 视觉 API",
         "description": "这个节点使用Ollama VLM 模型进行图片推理分析",
         "inputs": {
-            "image":{
+            "images":{
                 "name": "图像",
-                "tooltip": "用于分析的图像"
+                "tooltip": "用于分析的图像(支持多个)"
             },
             "model": {
                 "name": "模型"
