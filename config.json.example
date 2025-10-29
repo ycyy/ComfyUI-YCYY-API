@@ -26,5 +26,10 @@
             "deepseek-v3.1:671b",
             "gpt-oss:120b"
         ]
+    },
+    "proxy":{
+        "enable": false,
+        "http": "",
+        "https": "http://127.0.0.1:7890"
     }
 }

@@ -11,6 +11,7 @@ from io import BytesIO
 from typing_extensions import override
 from comfy_api.latest import ComfyExtension, io
 from ..utils.image_utils import tensor_to_base64_string
+from ..utils.config_utils import get_config_section
 
 class GeminiImage(io.ComfyNode):
     """
@@ -90,6 +91,27 @@ class GeminiImage(io.ComfyNode):
             raise ValueError(f"Config loading error: {str(e)}")
 
     @classmethod
+    def _get_proxy_config(cls):
+        """
+        从config.json中获取代理配置
+        返回 proxies 字典或 None
+        """
+        try:
+            proxy_config = get_config_section('proxy')
+            if not proxy_config or not proxy_config.get('enable', False):
+                return None
+
+            proxies = {}
+            if proxy_config.get('http'):
+                proxies['http'] = proxy_config['http']
+            if proxy_config.get('https'):
+                proxies['https'] = proxy_config['https']
+
+            return proxies if proxies else None
+        except Exception:
+            return None
+
+    @classmethod
     def define_schema(cls) -> io.Schema:
         """
             返回一个包含该节点所有信息的模式（schema）。
@@ -107,7 +129,7 @@ class GeminiImage(io.ComfyNode):
             category="YCYY/API/image",
             inputs=[
                 io.Image.Input(
-                    "images",
+                    id="images",
                     optional=True,
                     tooltip="Optional image(s) to use as context for the model"
                 ),
@@ -173,16 +195,18 @@ class GeminiImage(io.ComfyNode):
     def execute(cls, prompt, model, aspectRatio, seed,images=None) -> io.NodeOutput:
         # 加载配置和凭据
         base_url, api_key, timeout = cls._load_config_credentials()
+        # 获取代理配置
+        proxies = cls._get_proxy_config()
         if not prompt:
             raise ValueError("prompt cannot be empty")
         api_url = base_url+"/"+model+":generateContent"
         if images is not None:
-            return cls._edit_images(api_url,api_key,prompt,aspectRatio,seed,images,timeout)
+            return cls._edit_images(api_url,api_key,prompt,aspectRatio,seed,images,timeout,proxies)
         else:
-            return cls._generate_images(api_url,api_key,prompt,aspectRatio,seed,timeout)
+            return cls._generate_images(api_url,api_key,prompt,aspectRatio,seed,timeout,proxies)
     # 图生图模式
     @classmethod
-    def _edit_images(cls,api_url,api_key,prompt,aspectRatio,seed,images,timeout)-> io.NodeOutput:
+    def _edit_images(cls,api_url,api_key,prompt,aspectRatio,seed,images,timeout,proxies=None)-> io.NodeOutput:
         image_parts = cls._create_image_parts(images)
         image_parts.append(
             {
@@ -211,7 +235,7 @@ class GeminiImage(io.ComfyNode):
         # print(f"正在请求Gemini文生图API: {api_url}")
         # print(f"请求载荷: {json.dumps(payload)}")
         try:
-            resp = requests.post(api_url, headers=headers, json=payload, timeout=timeout)
+            resp = requests.post(api_url, headers=headers, json=payload, timeout=timeout, proxies=proxies)
             return cls._parse_response(resp)
         except Exception as e:
             empty_image = cls._create_empty_image()
@@ -235,7 +259,7 @@ class GeminiImage(io.ComfyNode):
         return image_parts
     # 文生图模式
     @classmethod
-    def _generate_images(cls,api_url,api_key,prompt,aspectRatio,seed,timeout)-> io.NodeOutput:
+    def _generate_images(cls,api_url,api_key,prompt,aspectRatio,seed,timeout,proxies=None)-> io.NodeOutput:
         headers = {
             "x-goog-api-key": api_key,
             "Content-Type": "application/json"
@@ -262,7 +286,7 @@ class GeminiImage(io.ComfyNode):
         # print(f"正在请求Gemini文生图API: {api_url}")
         # print(f"请求载荷: {json.dumps(payload)}")
         try:
-            resp = requests.post(api_url, headers=headers, json=payload, timeout=timeout)
+            resp = requests.post(api_url, headers=headers, json=payload, timeout=timeout, proxies=proxies)
             return cls._parse_response(resp)
         except Exception as e:
             empty_image = cls._create_empty_image()

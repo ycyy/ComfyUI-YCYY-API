@@ -3,7 +3,7 @@
         "display_name": "Gemini Image API",
         "inputs": {
             "images": {
-                "name": "image",
+                "name": "images",
                 "tooltip": "Optional image(s) to use as context for the model"
             },
             "prompt": {
