@@ -1,0 +1,267 @@
+{
+  "id": "b81caada-5e43-4504-9b76-6fb095d217f3",
+  "revision": 0,
+  "last_node_id": 8,
+  "last_link_id": 5,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "PrimitiveStringMultiline",
+      "pos": [
+        950,
+        -1770
+      ],
+      "size": [
+        360,
+        150
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            2
+          ]
+        }
+      ],
+      "title": "系统提示词（请勿修改）",
+      "properties": {
+        "Node name for S&R": "PrimitiveStringMultiline"
+      },
+      "widgets_values": [
+        "You are a professional edit instruction rewriter and prompt engineer. Your task is to generate a precise, concise, and visually achievable chain-of-thought reasoning based on the user-provided instruction and the image to be edited.\nYou have the following information:\n1. The user provides an image (the original image to be edited)\n2. question text: {input_prompt}\n\nYour task is NOT to output the final answer or the edited image. Instead, you must:\n- Generate a \"thinking\" or chain-of-thought process that explains how you reason about the editing task.\n- First identify the task type, then provide reasoning/analysis that leads to how the image should be edited.\n- Always describe pose and appearance in detail.\n- Match the original visual style or genre (anime, CG art, cinematic, poster). If not explicit, choose a stylistically appropriate one based on the image.\n- Incorporate motion and camera direction when relevant (e.g., walking, turning, dolly in/out, pan), implying natural human/character motion and interactions.\n- Maintain quoted phrases or titles exactly (e.g., character names, series names). Do not translate or alter the original language of text.\n\n## Task Type Handling Rules:\n\n**1. Standard Editing Tasks (e.g., Add, Delete, Replace, Action Change):**\n- For replacement tasks, specify what to replace and key visual features of the new element.\n- For text editing tasks, specify text position, color, and layout concisely.\n- If the user wants to \"extract\" something, this means they want to remove the background and only keep the specified object isolated. We should add \"while removing the background\" to the reasoning.\n- Explicitly note what must stay unchanged: appearances (hairstyle, clothing, expression, skin tone/race, age), posture, pose, visual style/genre, spatial layout, and shot composition (e.g., medium shot, close-up, side view).\n\n**2. Character Consistency Editing Tasks (e.g., Scenario Change):**\n- For tasks that place an object/character (e.g., human, robot, animal) in a completely new scenario, preserve the object's core identity (appearance, materials, key features) but adapt its pose, interaction, and context to fit naturally in the new environment.\n- Reason about how the object should interact with the new scenario (e.g., pose changes, hand positions, orientation, facial direction).\n- The background and context should transform completely to match the new scenario while maintaining visual coherence.\n- Describe both what stays the same (core appearance) and what must change (pose, interaction, setting) to make the scene look realistic and natural.\n\nThe length of outputs should be **around 80 - 100 words** to fully describe the transformation. Always start with \"The user wants to ...\"\n\nExample Output 1 (Standard Editing Task):\nThe user wants to make the knight kneel on his right knee while keeping the rest of the pose intact. \nThe knight should lower his stance so his right leg bends to the ground in a kneeling position, with the left leg bent upright to support balance. \nThe shield with the NVIDIA logo should still be held up firmly in his left hand, angled forward in a defensive posture, while the right hand continues gripping the weapon. \nThe armor reflections, proportions, and medieval style should remain consistent, emphasizing a powerful and respectful kneeling stance.\n\nExample Output 2 (Character Consistency Editing Task):\nThe user wants to change the image by modifying the scene so that the woman is drinking coffee in a cozy coffee shop. \nThe elegant anime-style woman keeps her same graceful expression, long flowing dark hair adorned with golden ornaments, and detailed traditional outfit with red and gold floral patterns. \nShe is now seated at a wooden café table, holding a steaming cup of coffee near her lips with one hand, while soft sunlight filters through the window, highlighting her refined features. \nThe background transforms into a warmly lit café interior with subtle reflections, bookshelves, and gentle ambience, maintaining the delicate, painterly aesthetic."
+      ]
+    },
+    {
+      "id": 3,
+      "type": "MarkdownNote",
+      "pos": [
+        430,
+        -2120
+      ],
+      "size": [
+        400,
+        290
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "工作流介绍",
+      "properties": {},
+      "widgets_values": [
+        "## 介绍说明\n`ChronoEdit` 将图像编辑重新定义为视频生成任务，使用输入和编辑后的图像作为起始/结束帧，利用预训练的具有时间一致性的视频模型。时间推理阶段引入推理标记，以确保编辑在物理上合理，并可视化编辑轨迹。\n\n当前工作流根据 `ChronoEdit` 官方提示词指南说明，借助VLM大模型制作的提示词增强器以获得最佳效果。\n## 使用说明\n\n通过系统提示词配合用户提示词，生成符合模型要求的增强提示词。"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 5,
+      "type": "YCYY_Ollama_VLM_API",
+      "pos": [
+        1470,
+        -1870
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 4
+        },
+        {
+          "name": "system_prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "system_prompt"
+          },
+          "link": 2
+        },
+        {
+          "name": "user_prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "user_prompt"
+          },
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            5
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "YCYY_Ollama_VLM_API"
+      },
+      "widgets_values": [
+        "",
+        "",
+        "qwen3-vl:235b"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "PrimitiveStringMultiline",
+      "pos": [
+        960,
+        -1570
+      ],
+      "size": [
+        360,
+        190
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "title": "用户提示词（根据需求编写）",
+      "properties": {
+        "Node name for S&R": "PrimitiveStringMultiline"
+      },
+      "widgets_values": [
+        "保持任务主体特征不变，将人物衣服改成红色"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "LoadImage",
+      "pos": [
+        960,
+        -2140
+      ],
+      "size": [
+        320,
+        326
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            4
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "1.png",
+        "image"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "PreviewAny",
+      "pos": [
+        2100,
+        -1850
+      ],
+      "size": [
+        330,
+        160
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "source",
+          "type": "*",
+          "link": 5
+        }
+      ],
+      "outputs": [],
+      "title": "增强提示词",
+      "properties": {
+        "Node name for S&R": "PreviewAny"
+      },
+      "widgets_values": []
+    }
+  ],
+  "links": [
+    [
+      2,
+      1,
+      0,
+      5,
+      1,
+      "STRING"
+    ],
+    [
+      3,
+      6,
+      0,
+      5,
+      2,
+      "STRING"
+    ],
+    [
+      4,
+      7,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      5,
+      5,
+      0,
+      8,
+      0,
+      "*"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.7935506525833045,
+      "offset": [
+        -372.1991845276473,
+        2476.7145523015984
+      ]
+    },
+    "frontendVersion": "1.32.2",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}
