@@ -91,6 +91,10 @@
             "persist_context": {
                 "name": "persist_context",
                 "tooltip": "Persist chat context between calls (multi-turn conversation)"
+            },
+            "clear_history": {
+                "name": "clear_history",
+                "tooltip": "Clear conversation history and start a new conversation"
             }
         },
         "outputs": {

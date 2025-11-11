@@ -83,8 +83,13 @@ class OllamaLLM(io.ComfyNode):
                     id="persist_context",
                     default=True,
                     tooltip="Persist chat context between calls (multi-turn conversation)"
+                ),
+                io.Boolean.Input(
+                    id="clear_history",
+                    default=False,
+                    tooltip="Clear conversation history and start a new conversation"
                 )
-                
+
             ],
             outputs=[
                 io.String.Output(
@@ -135,7 +140,7 @@ class OllamaLLM(io.ComfyNode):
 
     # 执行 OllamaLLM 节点
     @classmethod
-    def execute(cls, system_prompt, user_prompt, model, persist_context,advanced_options=None) -> io.NodeOutput:
+    def execute(cls, system_prompt, user_prompt, model, persist_context, advanced_options=None, clear_history=False) -> io.NodeOutput:
         if not user_prompt:
             raise ValueError("User prompt cannot be empty")
 
@@ -144,6 +149,10 @@ class OllamaLLM(io.ComfyNode):
 
         # 生成会话标识符（基于模型和系统提示词）
         session_key = f"{model}_{hash(system_prompt) if system_prompt else 'no_system'}"
+
+        # 如果用户要求清空历史，删除该会话的历史记录
+        if clear_history and session_key in cls._conversation_history:
+            del cls._conversation_history[session_key]
 
         # 根据persist_context决定是否使用历史消息
         if persist_context:

@@ -92,6 +92,10 @@
             "persist_context": {
                 "name": "持久化上下文",
                 "tooltip": "在调用之间保留聊天上下文（多轮对话）"
+            },
+            "clear_history": {
+                "name": "清除历史记录",
+                "tooltip": "清除对话历史并开启新对话"
             }
         },
         "outputs": {
