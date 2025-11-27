@@ -168,7 +168,12 @@ class GeminiImage(io.ComfyNode):
                         "4K"
                     ],
                     default="1K",
-                    tooltip="Control the resolution of the output image. 1K is approximately 1024x1024, 2K is approximately 2048x2048, 4K is approximately 4096x4096."
+                    tooltip="Control the resolution of the output image. 1K is approximately 1024x1024, 2K is approximately 2048x2048, 4K is approximately 4096x4096(Only effective for the gemini-3 model)."
+                ),
+                io.Boolean.Input(
+                    id="enableSearch",
+                    default=False,
+                    tooltip="Use the Google Search tool to generate images based on real-time information(Only effective for the gemini-3 model)"
                 ),
                 io.Int.Input(
                     id="seed",
@@ -202,7 +207,7 @@ class GeminiImage(io.ComfyNode):
     #         return []
     # 执行 GeminiImage 节点
     @classmethod
-    def execute(cls, prompt, model, aspectRatio, imageSize, seed,images=None) -> io.NodeOutput:
+    def execute(cls, prompt, model, aspectRatio, imageSize, enableSearch, seed,images=None) -> io.NodeOutput:
         # 加载配置和凭据
         base_url, api_key, timeout = cls._load_config_credentials()
         # 获取代理配置
@@ -211,12 +216,12 @@ class GeminiImage(io.ComfyNode):
             raise ValueError("prompt cannot be empty")
         api_url = base_url+"/"+model+":generateContent"
         if images is not None:
-            return cls._edit_images(api_url,api_key,prompt,model,aspectRatio,imageSize,seed,images,timeout,proxies)
+            return cls._edit_images(api_url,api_key,prompt,model,aspectRatio,imageSize,enableSearch,seed,images,timeout,proxies)
         else:
-            return cls._generate_images(api_url,api_key,prompt,model,aspectRatio,imageSize,seed,timeout,proxies)
+            return cls._generate_images(api_url,api_key,prompt,model,aspectRatio,imageSize,enableSearch,seed,timeout,proxies)
     # 图生图模式
     @classmethod
-    def _edit_images(cls,api_url,api_key,prompt,model,aspectRatio,imageSize,seed,images,timeout,proxies=None)-> io.NodeOutput:
+    def _edit_images(cls,api_url,api_key,prompt,model,aspectRatio,imageSize,enableSearch,seed,images,timeout,proxies=None)-> io.NodeOutput:
         image_parts = cls._create_image_parts(images)
         image_parts.append(
             {
@@ -244,7 +249,7 @@ class GeminiImage(io.ComfyNode):
                 payload["generationConfig"]["imageConfig"] = {
                     "aspectRatio": aspectRatio
                 }
-        else:
+        elif model == "gemini-3-pro-image-preview":
             # 对于支持imageSize的模型，添加imageSize和aspectRatio
             image_config = {
                 "imageSize": imageSize
@@ -252,6 +257,9 @@ class GeminiImage(io.ComfyNode):
             if aspectRatio != "auto":
                 image_config["aspectRatio"] = aspectRatio
             payload["generationConfig"]["imageConfig"] = image_config
+            if enableSearch:
+                payload["tools"] = [{"google_search": {}}]
+
         # print(f"正在请求Gemini文生图API: {api_url}")
         # print(f"请求载荷: {json.dumps(payload)}")
         try:
@@ -279,7 +287,7 @@ class GeminiImage(io.ComfyNode):
         return image_parts
     # 文生图模式
     @classmethod
-    def _generate_images(cls,api_url,api_key,prompt,model,aspectRatio,imageSize,seed,timeout,proxies=None)-> io.NodeOutput:
+    def _generate_images(cls,api_url,api_key,prompt,model,aspectRatio,imageSize,enableSearch,seed,timeout,proxies=None)-> io.NodeOutput:
         headers = {
             "x-goog-api-key": api_key,
             "Content-Type": "application/json"
@@ -305,7 +313,7 @@ class GeminiImage(io.ComfyNode):
                 payload["generationConfig"]["imageConfig"] = {
                     "aspectRatio": aspectRatio
                 }
-        else:
+        elif model == "gemini-3-pro-image-preview":
             # 对于支持imageSize的模型，添加imageSize和aspectRatio
             image_config = {
                 "imageSize": imageSize
@@ -313,6 +321,9 @@ class GeminiImage(io.ComfyNode):
             if aspectRatio != "auto":
                 image_config["aspectRatio"] = aspectRatio
             payload["generationConfig"]["imageConfig"] = image_config
+            if enableSearch:
+                payload["tools"] = [{"google_search": {}}]
+
         # print(f"正在请求Gemini文生图API: {api_url}")
         # print(f"请求载荷: {json.dumps(payload)}")
         try:

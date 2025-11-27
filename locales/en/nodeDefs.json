@@ -16,6 +16,14 @@
                 "name": "aspectRatio",
                 "tooltip": "The model defaults to matching the output image size to that of your input image, or otherwise generates 1:1 squares. You can control the aspect ratio of the output image using the aspect ratio"
             },
+            "imageSize": {
+                "name": "imageSize",
+                "tooltip": "Control the resolution of the output image. 1K is approximately 1024x1024, 2K is approximately 2048x2048, 4K is approximately 4096x4096 (Only effective for the gemini-3 model)."
+            },
+            "enableSearch": {
+                "name": "enableSearch",
+                "tooltip": "Use the Google Search tool to generate images based on real-time information (Only effective for the gemini-3 model)"
+            },
             "seed": {
                 "name": "seed",
                 "tooltip": "Seed to use for generation"
