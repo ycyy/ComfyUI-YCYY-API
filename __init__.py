@@ -5,6 +5,7 @@ from .options.proxy_options_node import *
 from .ollama.ollama_vlm_node import *
 from .ollama.ollama_llm_node import *
 from .options.ollama_llm_advanced_options_node import *
+from .options.ollama_config_options_node import *
 from typing_extensions import override
 
 class APIExtension(ComfyExtension):
@@ -17,7 +18,8 @@ class APIExtension(ComfyExtension):
             ProxyConfigOptions,
             OllamaVLM,
             OllamaLLM,
-            OllamaLLMAdvanceOptions
+            OllamaLLMAdvanceOptions,
+            OllamaConfigOptions
         ]
 
 

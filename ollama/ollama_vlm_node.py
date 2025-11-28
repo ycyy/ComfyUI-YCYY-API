@@ -14,11 +14,21 @@ from ..utils.image_utils import tensor_to_base64_string
 from ..utils.config_utils import get_config_section,get_models_list
 
 
-def _load_config_credentials():
+def _load_config_credentials(config_options=None):
     """
-    从config.json中加载并验证API凭据
+    从config.json中加载并验证API凭据，如果提供了config_options则优先使用
     返回 (base_url, api_key, timeout) 元组
     """
+    # 如果提供了配置覆盖，则使用覆盖配置
+    if config_options is not None:
+        base_url = config_options.get('base_url', '').strip()
+        api_key = config_options.get('api_key', '').strip()
+        timeout = config_options.get('timeout', 120)
+
+        # 如果覆盖配置中有有效的 base_url，则直接返回
+        if base_url:
+            return base_url, api_key, timeout
+
     try:
         ollama_vlm_config = get_config_section('ollama-vlm')
         # 获取并验证base_url
@@ -40,10 +50,53 @@ def _load_config_credentials():
             except ValueError:
                 timeout = 120
 
+        # 如果有配置覆盖，则使用覆盖的值（如果提供了）
+        if config_options is not None:
+            if config_options.get('base_url', '').strip():
+                base_url = config_options['base_url'].strip()
+            if config_options.get('api_key', '').strip():
+                api_key = config_options['api_key'].strip()
+            if config_options.get('timeout'):
+                timeout = config_options['timeout']
+
         return base_url, api_key, timeout
 
     except Exception as e:
         raise ValueError(f"Failed to load Ollama VLM config section: {str(e)}")
+
+def _get_proxy_config(proxy_options=None):
+    """
+    从config.json中获取代理配置，如果提供了proxy_options则优先使用
+    返回 proxies 字典或 None
+    """
+    # 如果提供了代理覆盖配置
+    if proxy_options is not None:
+        if not proxy_options.get('enable', False):
+            return None
+
+        proxies = {}
+        if proxy_options.get('http', '').strip():
+            proxies['http'] = proxy_options['http'].strip()
+        if proxy_options.get('https', '').strip():
+            proxies['https'] = proxy_options['https'].strip()
+
+        return proxies if proxies else None
+
+    # 否则从配置文件加载
+    try:
+        proxy_config = get_config_section('proxy')
+        if not proxy_config or not proxy_config.get('enable', False):
+            return None
+
+        proxies = {}
+        if proxy_config.get('http'):
+            proxies['http'] = proxy_config['http']
+        if proxy_config.get('https'):
+            proxies['https'] = proxy_config['https']
+
+        return proxies if proxies else None
+    except Exception:
+        return None
 
 class OllamaVLM(io.ComfyNode):
     """
@@ -65,6 +118,16 @@ class OllamaVLM(io.ComfyNode):
             display_name="Ollama VLM API",
             category="YCYY/API/text",
             inputs=[
+                io.AnyType.Input(
+                    id="config_options",
+                    optional=True,
+                    tooltip="Optional configuration override from YCYY Ollama Config Options"
+                ),
+                io.AnyType.Input(
+                    id="proxy_options",
+                    optional=True,
+                    tooltip="Optional proxy configuration override from YCYY Proxy Config Options"
+                ),
                 io.Image.Input(
                     "images",
                     tooltip="Image used for analysis"
@@ -104,13 +167,14 @@ class OllamaVLM(io.ComfyNode):
     #         return ["int_field", "float_field", "string_field"]
     #     else:
     #         return []
-    # 执行 GeminiImage 节点
+    # 执行 OllamaVLM 节点
     @classmethod
-    def execute(cls,images, system_prompt, user_prompt, model) -> io.NodeOutput:
+    def execute(cls,images, system_prompt, user_prompt, model, config_options=None, proxy_options=None) -> io.NodeOutput:
         if not user_prompt:
             raise ValueError("User prompt cannot be empty")
 
-        base_url, api_key, timeout = _load_config_credentials()
+        base_url, api_key, timeout = _load_config_credentials(config_options)
+        proxies = _get_proxy_config(proxy_options)
         api_url = base_url
         payload = {
             "model": model,
@@ -151,9 +215,9 @@ class OllamaVLM(io.ComfyNode):
                 headers = {
                     "Authorization": "Bearer "+api_key
                 }
-                resp = requests.post(api_url, headers=headers, json=payload, timeout=timeout)
+                resp = requests.post(api_url, headers=headers, json=payload, timeout=timeout, proxies=proxies)
             else:
-                resp = requests.post(api_url, json=payload, timeout=timeout)
+                resp = requests.post(api_url, json=payload, timeout=timeout, proxies=proxies)
             print(resp)
             return cls._parse_response(resp)
         except Exception as e:

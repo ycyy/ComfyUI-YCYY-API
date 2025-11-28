@@ -13,7 +13,8 @@
         "api_key": "",
         "timeout": 120,
         "models": [
-            "qwen3-vl:235b"
+            "qwen3-vl:235b",
+            "qwen3-vl:235b-instruct"
         ]
     },
     "ollama-llm": {
@@ -25,6 +26,7 @@
             "kimi-k2:1t",
             "qwen3-coder:480b",
             "deepseek-v3.1:671b",
+            "cogito-2.1:671b",
             "gpt-oss:120b"
         ]
     },
