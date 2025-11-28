@@ -42,11 +42,22 @@ class GeminiImage(io.ComfyNode):
             return ["gemini-2.5-flash-image"]
 
     @classmethod
-    def _load_config_credentials(cls):
+    def _load_config_credentials(cls, config_options=None):
         """
-        从config.json中加载并验证API凭据
+        从config.json中加载并验证API凭据，如果提供了config_options则优先使用
         返回 (base_url, api_key, timeout) 元组
         """
+        # 如果提供了配置覆盖，则使用覆盖配置
+        if config_options is not None:
+            base_url = config_options.get('base_url', '').strip()
+            api_key = config_options.get('api_key', '').strip()
+            timeout = config_options.get('timeout', 120)
+
+            # 如果覆盖配置中有有效的 base_url 和 api_key，则直接返回
+            if base_url and api_key:
+                return base_url, api_key, timeout
+
+        # 否则从配置文件加载
         config_path = os.path.join(os.path.dirname(__file__), '..',  "config.json")
 
         # 检查配置文件是否存在
@@ -84,6 +95,15 @@ class GeminiImage(io.ComfyNode):
                     timeout = int(timeout)
                 except ValueError:
                     timeout = 120
+
+            # 如果有配置覆盖，则使用覆盖的值（如果提供了）
+            if config_options is not None:
+                if config_options.get('base_url', '').strip():
+                    base_url = config_options['base_url'].strip()
+                if config_options.get('api_key', '').strip():
+                    api_key = config_options['api_key'].strip()
+                if config_options.get('timeout'):
+                    timeout = config_options['timeout']
 
             return base_url, api_key, timeout
 
@@ -132,6 +152,11 @@ class GeminiImage(io.ComfyNode):
                     id="images",
                     optional=True,
                     tooltip="Optional image(s) to use as context for the model"
+                ),
+                io.AnyType.Input(
+                    id="config_options",
+                    optional=True,
+                    tooltip="Optional configuration override from YCYY Gemini Image Config Options"
                 ),
                 io.String.Input(
                     id="prompt",
@@ -207,9 +232,9 @@ class GeminiImage(io.ComfyNode):
     #         return []
     # 执行 GeminiImage 节点
     @classmethod
-    def execute(cls, prompt, model, aspectRatio, imageSize, enableSearch, seed,images=None) -> io.NodeOutput:
-        # 加载配置和凭据
-        base_url, api_key, timeout = cls._load_config_credentials()
+    def execute(cls, prompt, model, aspectRatio, imageSize, enableSearch, seed, images=None, config_options=None) -> io.NodeOutput:
+        # 加载配置和凭据，如果提供了config_options则使用覆盖配置
+        base_url, api_key, timeout = cls._load_config_credentials(config_options)
         # 获取代理配置
         proxies = cls._get_proxy_config()
         if not prompt:
