@@ -1,13 +1,4 @@
-import io
-import os
-import sys
-import json
-import base64
 import requests
-import torch
-import numpy as np
-from PIL import Image
-from io import BytesIO
 from typing_extensions import override
 from comfy_api.latest import ComfyExtension, io
 from ..utils.image_utils import tensor_to_base64_string
