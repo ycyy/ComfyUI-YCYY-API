@@ -111,11 +111,25 @@ class GeminiImage(io.ComfyNode):
             raise ValueError(f"Config loading error: {str(e)}")
 
     @classmethod
-    def _get_proxy_config(cls):
+    def _get_proxy_config(cls, proxy_options=None):
         """
-        从config.json中获取代理配置
+        从config.json中获取代理配置，如果提供了proxy_options则优先使用
         返回 proxies 字典或 None
         """
+        # 如果提供了代理覆盖配置
+        if proxy_options is not None:
+            if not proxy_options.get('enable', False):
+                return None
+
+            proxies = {}
+            if proxy_options.get('http', '').strip():
+                proxies['http'] = proxy_options['http'].strip()
+            if proxy_options.get('https', '').strip():
+                proxies['https'] = proxy_options['https'].strip()
+
+            return proxies if proxies else None
+
+        # 否则从配置文件加载
         try:
             proxy_config = get_config_section('proxy')
             if not proxy_config or not proxy_config.get('enable', False):
@@ -157,6 +171,11 @@ class GeminiImage(io.ComfyNode):
                     id="config_options",
                     optional=True,
                     tooltip="Optional configuration override from YCYY Gemini Image Config Options"
+                ),
+                io.AnyType.Input(
+                    id="proxy_options",
+                    optional=True,
+                    tooltip="Optional proxy configuration override from YCYY Proxy Config Options"
                 ),
                 io.String.Input(
                     id="prompt",
@@ -232,11 +251,11 @@ class GeminiImage(io.ComfyNode):
     #         return []
     # 执行 GeminiImage 节点
     @classmethod
-    def execute(cls, prompt, model, aspectRatio, imageSize, enableSearch, seed, images=None, config_options=None) -> io.NodeOutput:
+    def execute(cls, prompt, model, aspectRatio, imageSize, enableSearch, seed, images=None, config_options=None, proxy_options=None) -> io.NodeOutput:
         # 加载配置和凭据，如果提供了config_options则使用覆盖配置
         base_url, api_key, timeout = cls._load_config_credentials(config_options)
-        # 获取代理配置
-        proxies = cls._get_proxy_config()
+        # 获取代理配置，如果提供了proxy_options则使用覆盖配置
+        proxies = cls._get_proxy_config(proxy_options)
         if not prompt:
             raise ValueError("prompt cannot be empty")
         api_url = base_url+"/"+model+":generateContent"
