@@ -30,6 +30,16 @@
             "gpt-oss:120b"
         ]
     },
+    "modelscope-image": {
+        "base_url": "https://api-inference.modelscope.cn",
+        "api_key": "put your token here",
+        "timeout": 300,
+        "models": [
+            "Tongyi-MAI/Z-Image-Turbo",
+            "black-forest-labs/FLUX.1-Krea-dev",
+            "Qwen/Qwen-Image"
+        ]
+    },
     "proxy":{
         "enable": false,
         "http": "",

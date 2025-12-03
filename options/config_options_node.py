@@ -1,28 +1,27 @@
 from comfy_api.latest import ComfyExtension, io
 
-class GeminiImageConfigOptions(io.ComfyNode):
+class ConfigOptions(io.ComfyNode):
     """
-    这个节点用于覆盖 Gemini Image API 的配置参数（base_url、api_key、timeout）
+    这个节点用于覆盖 API 的配置参数（base_url、api_key、timeout）
     """
 
     @classmethod
     def define_schema(cls) -> io.Schema:
         return io.Schema(
-            node_id="YCYY_Gemini_Image_Config_Options",
-            display_name="Gemini Image Config Options",
+            node_id="YCYY_Config_Options",
+            display_name="Config Options",
             category="YCYY/API/utils",
             inputs=[
                 io.String.Input(
                     id="base_url",
-                    default="https://generativelanguage.googleapis.com/v1beta/models",
                     multiline=True,
-                    tooltip="Override the base URL for Gemini Image API"
+                    tooltip="Override the API base URL"
                 ),
                 io.String.Input(
                     id="api_key",
                     default="",
                     multiline=True,
-                    tooltip="Override the API key for Gemini Image API"
+                    tooltip="Override the API key"
                 ),
                 io.Int.Input(
                     id="timeout",
@@ -36,10 +35,10 @@ class GeminiImageConfigOptions(io.ComfyNode):
                 io.AnyType.Output(
                     id="config_options",
                     display_name="config_options",
-                    tooltip="Configuration override for Gemini Image API"
+                    tooltip="Override configuration options"
                 )
             ],
-            description="This node provides configuration override options for Gemini Image API (base_url, api_key, timeout)."
+            description="This node provides configuration override options (base_url, api_key, timeout)."
         )
 
     @classmethod

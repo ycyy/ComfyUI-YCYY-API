@@ -1,6 +1,6 @@
 from comfy_api.latest import ComfyExtension, io
 
-class ProxyConfigOptions(io.ComfyNode):
+class ProxyOptions(io.ComfyNode):
     """
     这个节点用于覆盖代理配置参数（enable、http、https）
     """
@@ -8,8 +8,8 @@ class ProxyConfigOptions(io.ComfyNode):
     @classmethod
     def define_schema(cls) -> io.Schema:
         return io.Schema(
-            node_id="YCYY_Proxy_Config_Options",
-            display_name="Proxy Config Options",
+            node_id="YCYY_Proxy_Options",
+            display_name="Proxy Options",
             category="YCYY/API/utils",
             inputs=[
                 io.Boolean.Input(
