@@ -257,5 +257,50 @@
                 "name": "String"
             }
         }
+    },
+    "YCYY_ModelScope_Image_API": {
+        "display_name": "ModelScope Image API",
+        "description": "This node uses the ModelScope API to generate images.",
+        "inputs": {
+            "config_options": {
+                "name": "config_options",
+                "tooltip": "Optional configuration override from YCYY API Config Options"
+            },
+            "proxy_options": {
+                "name": "proxy_options",
+                "tooltip": "Optional proxy configuration override from YCYY API Proxy Options"
+            },
+            "prompt": {
+                "name": "prompt",
+                "tooltip": "Image generation positive prompt"
+            },
+            "negative_prompt": {
+                "name": "negative_prompt",
+                "tooltip": "Image generation negative prompt"
+            },
+            "model": {
+                "name": "model"
+            },
+            "width": {
+                "name": "width"
+            },
+            "height": {
+                "name": "height"
+            },
+            "steps": {
+                "name": "steps"
+            },
+            "guidance": {
+                "name": "guidance"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "Image"
+            },
+            "1": {
+                "name": "String"
+            }
+        }
     }
 }

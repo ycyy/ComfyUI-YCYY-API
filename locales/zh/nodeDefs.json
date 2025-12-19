@@ -258,5 +258,50 @@
                 "name": "String"
             }
         }
+    },
+    "YCYY_ModelScope_Image_API": {
+        "display_name": "魔搭图像API",
+        "description": "该节点使用 ModelScope API 生成图像",
+        "inputs": {
+            "config_options":{
+                "name": "配置选项",
+                "tooltip": "可选配置覆盖选项，来自 YCYY API 配置选项"
+            },
+            "proxy_options":{
+                "name": "代理选项",
+                "tooltip": "可选代理覆盖选项，来自 YCYY API 代理选项"
+            },
+            "prompt": {
+                "name": "prompt",
+                "tooltip": "图像生成正向提示"
+            },
+            "negative_prompt": {
+                "name": "negative_prompt",
+                "tooltip": "图像生成负向提示"
+            },
+            "model": {
+                "name": "模型"
+            },
+            "width": {
+                "name": "宽度"
+            },
+            "height": {
+                "name": "高度"
+            },
+            "steps": {
+                "name": "采样步数"
+            },
+            "guidance": {
+                "name": "提示词引导系数"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "图像"
+            },
+            "1": {
+                "name": "字符串"
+            }
+        }
     }
 }

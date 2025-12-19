@@ -162,6 +162,16 @@ class ModelScopeImage(io.ComfyNode):
             display_name="ModelScope Image API",
             category="YCYY/API/image",
             inputs=[
+                io.AnyType.Input(
+                    id="config_options",
+                    optional=True,
+                    tooltip="Optional configuration override from YCYY API Config Options"
+                ),
+                io.AnyType.Input(
+                    id="proxy_options",
+                    optional=True,
+                    tooltip="Optional proxy configuration override from YCYY API Proxy Options"
+                ),
                 io.String.Input(
                     id="prompt",
                     multiline=True,
@@ -205,16 +215,6 @@ class ModelScopeImage(io.ComfyNode):
                     max=20,
                     default=3.5,
                     step=0.1
-                ),
-                io.AnyType.Input(
-                    id="config_options",
-                    optional=True,
-                    tooltip="Optional configuration override"
-                ),
-                io.AnyType.Input(
-                    id="proxy_options",
-                    optional=True,
-                    tooltip="Optional proxy configuration override"
                 ),
                 io.Int.Input(
                     id="seed",
