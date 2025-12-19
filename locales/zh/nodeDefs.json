@@ -7,6 +7,14 @@
                 "name": "图像",
                 "tooltip": "可选的图像，用作模型的上下文"
             },
+            "config_options":{
+                "name": "配置选项",
+                "tooltip": "可选配置可从 YCYY API 配置选项中进行覆盖"
+            },
+            "proxy_options":{
+                "name": "代理配置选项",
+                "tooltip": "可选的代理配置覆盖来自 YCYY API 代理配置选项。"
+            },
             "prompt": {
                 "name": "prompt"
             },

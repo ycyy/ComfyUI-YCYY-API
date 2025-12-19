@@ -6,6 +6,14 @@
                 "name": "images",
                 "tooltip": "Optional image(s) to use as context for the model"
             },
+            "config_options":{
+                "name": "config_options",
+                "tooltip": "Optional configuration override from YCYY API Config Options"
+            },
+            "proxy_options":{
+                "name": "proxy_options",
+                "tooltip": "Optional proxy configuration override from YCYY API Proxy Config Options"
+            },
             "prompt": {
                 "name": "prompt"
             },
