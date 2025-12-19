@@ -8,8 +8,8 @@ class ConfigOptions(io.ComfyNode):
     @classmethod
     def define_schema(cls) -> io.Schema:
         return io.Schema(
-            node_id="YCYY_Config_Options",
-            display_name="Config Options",
+            node_id="YCYY_API_Config_Options",
+            display_name="API Config Options",
             category="YCYY/API/utils",
             inputs=[
                 io.String.Input(
@@ -38,7 +38,7 @@ class ConfigOptions(io.ComfyNode):
                     tooltip="Override configuration options"
                 )
             ],
-            description="This node provides configuration override options (base_url, api_key, timeout)."
+            description="This node provides override API config options."
         )
 
     @classmethod

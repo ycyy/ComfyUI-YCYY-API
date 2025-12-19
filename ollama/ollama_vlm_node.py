@@ -112,12 +112,12 @@ class OllamaVLM(io.ComfyNode):
                 io.AnyType.Input(
                     id="config_options",
                     optional=True,
-                    tooltip="Optional configuration override from YCYY Ollama Config Options"
+                    tooltip="Optional configuration override from YCYY API Config Options"
                 ),
                 io.AnyType.Input(
                     id="proxy_options",
                     optional=True,
-                    tooltip="Optional proxy configuration override from YCYY Proxy Config Options"
+                    tooltip="Optional proxy configuration override from YCYY API Proxy Config Options"
                 ),
                 io.Image.Input(
                     "images",

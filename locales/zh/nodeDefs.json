@@ -9,11 +9,11 @@
             },
             "config_options":{
                 "name": "配置选项",
-                "tooltip": "可选配置可从 YCYY API 配置选项中进行覆盖"
+                "tooltip": "可选配置覆盖选项，来自 YCYY API 配置选项"
             },
             "proxy_options":{
-                "name": "代理配置选项",
-                "tooltip": "可选的代理配置覆盖来自 YCYY API 代理配置选项。"
+                "name": "代理选项",
+                "tooltip": "可选代理覆盖选项，来自 YCYY API 代理选项"
             },
             "prompt": {
                 "name": "prompt"
@@ -78,6 +78,14 @@
                 "name": "图像",
                 "tooltip": "用于分析的图像(支持多个)"
             },
+            "config_options":{
+                "name": "配置选项",
+                "tooltip": "可选配置覆盖选项，来自 YCYY API 配置选项"
+            },
+            "proxy_options":{
+                "name": "代理选项",
+                "tooltip": "可选代理覆盖选项，来自 YCYY API 代理选项"
+            },
             "model": {
                 "name": "模型"
             }
@@ -92,6 +100,14 @@
         "display_name": "Ollama 文本 API",
         "description": "该节点使用 Ollama 大语言模型进行对话",
         "inputs": {
+            "config_options":{
+                "name": "配置选项",
+                "tooltip": "可选配置覆盖选项，来自 YCYY API 配置选项"
+            },
+            "proxy_options":{
+                "name": "代理选项",
+                "tooltip": "可选代理覆盖选项，来自 YCYY API 代理选项"
+            },
             "advanced_options":{
                 "name": "高级选项",
                 "tooltip": "模型的高级选项（可选）,接受来自 Ollama 文本高级选项节点的输入。"
@@ -117,7 +133,7 @@
         "outputs": {
             "0": {
                 "name": "结果",
-                "tooltip": "返回结果"
+                "tooltip": "返回结果文本"
             },
             "1": {
                 "name": "上下文",
@@ -159,6 +175,87 @@
             "0": {
                 "name": "高级选项",
                 "tooltip": "模型的高级选项。"
+            }
+        }
+    },
+    "YCYY_API_Config_Options": {
+        "display_name": "API 配置选项",
+        "description": "该节点提供了覆盖 API 配置选项的功能",
+        "inputs": {
+            "base_url": {
+                "name": "base_url",
+                "tooltip": "覆盖 API 基础 URL"
+            },
+            "api_key": {
+                "name": "api_key",
+                "tooltip": "覆盖 API 密钥"
+            },
+            "timeout": {
+                "name": "timeout",
+                "tooltip": "以秒为单位覆盖请求超时时间"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "配置选项",
+                "tooltip": "覆盖配置选项"
+            }
+        }
+    },
+    "YCYY_API_Proxy_Options": {
+        "display_name": "API 代理选项",
+        "description": "该节点提供了覆盖 API 代理选项的功能",
+        "inputs": {
+            "enable": {
+                "name": "enable",
+                "tooltip": "启用或禁用代理"
+            },
+            "http": {
+                "name": "http",
+                "tooltip": "HTTP 代理地址（例如 http://127.0.0.1:7890）"
+            },
+            "https": {
+                "name": "https",
+                "tooltip": "HTTPS 代理地址（例如 http://127.0.0.1:7890）"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "代理选项",
+                "tooltip": "覆盖代理选项"
+            }
+        }
+    },
+    "YCYY_Gemini_TTS_API": {
+        "display_name": "Gemini 文本转语音 API",
+        "description": "该节点使用 Google Gemini TTS API 将文本转换为语音",
+        "inputs": {
+            "text": {
+                "name": "text",
+                "tooltip": "需要转换为语音的文本"
+            },
+            "config_options":{
+                "name": "配置选项",
+                "tooltip": "可选配置覆盖选项，来自 YCYY API 配置选项"
+            },
+            "proxy_options":{
+                "name": "代理选项",
+                "tooltip": "可选代理覆盖选项，来自 YCYY API 代理选项"
+            },
+            "model": {
+                "name": "model"
+            },
+            "voiceName": {
+                "name": "语音名称",
+                "tooltip": "用于语音合成的语音"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "Audio"
+            },
+            "1": {
+                "name": "String"
             }
         }
     }

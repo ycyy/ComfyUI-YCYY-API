@@ -154,7 +154,7 @@ class GeminiTTS(io.ComfyNode):
                 io.String.Input(
                     id="text",
                     multiline=True,
-                    tooltip="The text to convert to speech"
+                    tooltip="The text to convert to speech.You can control style, tone, accent, and pace using natural language prompts.For example:Say in an spooky whisper:\"By the pricking of my thumbs...Something wicked this way comes\""
                 ),
                 io.AnyType.Input(
                     id="config_options",

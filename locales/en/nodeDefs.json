@@ -6,13 +6,13 @@
                 "name": "images",
                 "tooltip": "Optional image(s) to use as context for the model"
             },
-            "config_options":{
+            "config_options": {
                 "name": "config_options",
                 "tooltip": "Optional configuration override from YCYY API Config Options"
             },
-            "proxy_options":{
+            "proxy_options": {
                 "name": "proxy_options",
-                "tooltip": "Optional proxy configuration override from YCYY API Proxy Config Options"
+                "tooltip": "Optional proxy configuration override from YCYY API Proxy Options"
             },
             "prompt": {
                 "name": "prompt"
@@ -46,19 +46,19 @@
             }
         }
     },
-    "YCYY_Gemini_Image_Preset":{
+    "YCYY_Gemini_Image_Preset": {
         "display_name": "Gemini Image Preset",
         "description": "This node provides presets for the Gemini Image API.",
         "inputs": {
-            "preset":{
+            "preset": {
                 "name": "preset",
                 "tooltip": "Gemini image preset name"
             },
-            "description":{
+            "description": {
                 "name": "description",
                 "tooltip": "Gemini image preset description"
             },
-            "prompt":{
+            "prompt": {
                 "name": "prompt",
                 "tooltip": "Gemini image preset prompt"
             }
@@ -69,13 +69,21 @@
             }
         }
     },
-    "YCYY_Ollama_VLM_API":{
+    "YCYY_Ollama_VLM_API": {
         "display_name": "Ollama VLM API",
         "description": "This node uses the Ollama VLM model for image reasoning and analysis.",
         "inputs": {
-            "images":{
+            "images": {
                 "name": "images",
                 "tooltip": "Images used for analysis"
+            },
+            "config_options": {
+                "name": "config_options",
+                "tooltip": "Optional configuration override from YCYY API Config Options"
+            },
+            "proxy_options": {
+                "name": "proxy_options",
+                "tooltip": "Optional proxy configuration override from YCYY API Proxy Options"
             },
             "model": {
                 "name": "model"
@@ -87,18 +95,26 @@
             }
         }
     },
-    "YCYY_Ollama_LLM_API":{
+    "YCYY_Ollama_LLM_API": {
         "display_name": "Ollama LLM API",
         "description": "This node uses the Ollama LLM model for conversation.",
-        "inputs": {           
-            "advanced_options":{
+        "inputs": {
+            "config_options": {
+                "name": "config_options",
+                "tooltip": "Optional configuration override from YCYY API Config Options"
+            },
+            "proxy_options": {
+                "name": "proxy_options",
+                "tooltip": "Optional proxy configuration override from YCYY API Proxy Options"
+            },
+            "advanced_options": {
                 "name": "advanced_options",
                 "tooltip": "Optional configuration for the model.Accepts inputs from the Ollama LLM Advanced Options node."
             },
-            "system_prompt":{
+            "system_prompt": {
                 "name": "system_prompt"
             },
-            "user_prompt":{
+            "user_prompt": {
                 "name": "user_prompt"
             },
             "model": {
@@ -124,17 +140,17 @@
             }
         }
     },
-    "YCYY_Ollama_LLM_Advanced_Options":{
+    "YCYY_Ollama_LLM_Advanced_Options": {
         "display_name": "Ollama LLM Advanced Options",
         "description": "This node provides advanced options for the ollama LLM model.",
-        "inputs": {           
-            "max_tokens":{
+        "inputs": {
+            "max_tokens": {
                 "name": "max_tokens"
             },
-            "temperature":{
+            "temperature": {
                 "name": "temperature"
             },
-            "top_p":{
+            "top_p": {
                 "name": "top_p"
             },
             "enable_max_tokens": {
@@ -158,6 +174,87 @@
             "0": {
                 "name": "advanced_options",
                 "tooltip": "Advanced options for the model."
+            }
+        }
+    },
+    "YCYY_API_Config_Options": {
+        "display_name": "API Config Options",
+        "description": "This node provides override API config options.",
+        "inputs": {
+            "base_url": {
+                "name": "base_url",
+                "tooltip": "Override the API base URL"
+            },
+            "api_key": {
+                "name": "api_key",
+                "tooltip": "Override the API key"
+            },
+            "timeout": {
+                "name": "timeout",
+                "tooltip": "Override the request timeout in seconds"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "config_options",
+                "tooltip": "Override configuration options"
+            }
+        }
+    },
+    "YCYY_API_Proxy_Options": {
+        "display_name": "API Proxy Options",
+        "description": "This node provides override API proxy options.",
+        "inputs": {
+            "enable": {
+                "name": "enable",
+                "tooltip": "Enable or disable proxy"
+            },
+            "http": {
+                "name": "http",
+                "tooltip": "HTTP proxy address (e.g., http://127.0.0.1:7890)"
+            },
+            "https": {
+                "name": "https",
+                "tooltip": "HTTPS proxy address (e.g., http://127.0.0.1:7890)"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "proxy_options",
+                "tooltip": "Override proxy options"
+            }
+        }
+    },
+    "YCYY_Gemini_TTS_API": {
+        "display_name": "Gemini TTS API",
+        "description": "This node uses the Google Gemini TTS API to generate speech from text.",
+        "inputs": {
+            "text": {
+                "name": "text",
+                "tooltip": "The text to convert to speech.You can control style, tone, accent, and pace using natural language prompts.For example:Say in an spooky whisper:\"By the pricking of my thumbs...Something wicked this way comes\""
+            },
+            "config_options": {
+                "name": "config_options",
+                "tooltip": "Optional configuration override from YCYY API Config Options"
+            },
+            "proxy_options": {
+                "name": "proxy_options",
+                "tooltip": "Optional proxy configuration override from YCYY API Proxy Options"
+            },
+            "model": {
+                "name": "model"
+            },
+            "voiceName": {
+                "name": "voiceName",
+                "tooltip": "The voice to use for speech synthesis"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "Audio"
+            },
+            "1": {
+                "name": "String"
             }
         }
     }

@@ -8,8 +8,8 @@ class ProxyOptions(io.ComfyNode):
     @classmethod
     def define_schema(cls) -> io.Schema:
         return io.Schema(
-            node_id="YCYY_Proxy_Options",
-            display_name="Proxy Options",
+            node_id="YCYY_API_Proxy_Options",
+            display_name="API Proxy Options",
             category="YCYY/API/utils",
             inputs=[
                 io.Boolean.Input(
@@ -34,10 +34,10 @@ class ProxyOptions(io.ComfyNode):
                 io.AnyType.Output(
                     id="proxy_options",
                     display_name="proxy_options",
-                    tooltip="Proxy configuration override"
+                    tooltip="Override proxy options"
                 )
             ],
-            description="This node provides proxy configuration override options (enable, http, https)."
+            description="This node provides override API proxy options."
         )
 
     @classmethod
