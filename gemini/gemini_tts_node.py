@@ -208,6 +208,13 @@ class GeminiTTS(io.ComfyNode):
                     default="Zephyr",
                     tooltip="The voice to use for speech synthesis"
                 ),
+                io.Int.Input(
+                    id="seed",
+                    min=0,
+                    max=0xFFFFFFFFFFFFFFFF,
+                    default=0,
+                    control_after_generate=True
+                )
             ],
             outputs=[
                 io.Audio.Output(),  # Audio data as bytes/tensor
@@ -217,7 +224,7 @@ class GeminiTTS(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, text, model, voiceName, config_options=None, proxy_options=None) -> io.NodeOutput:
+    def execute(cls, text, model, voiceName, seed,config_options=None, proxy_options=None) -> io.NodeOutput:
         # 加载配置和凭据，如果提供了config_options则使用覆盖配置
         base_url, api_key, timeout = cls._load_config_credentials(config_options)
         # 获取代理配置，如果提供了proxy_options则使用覆盖配置

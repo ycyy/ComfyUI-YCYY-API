@@ -4,6 +4,7 @@ from typing_extensions import override
 from .gemini.gemini_image_node import *
 from .gemini.gemini_image_preset_node import *
 from .gemini.gemini_tts_node import *
+from .gemini.gemini_stt_node import *
 from .ollama.ollama_vlm_node import *
 from .ollama.ollama_llm_node import *
 from .options.ollama_llm_advanced_options_node import *
@@ -18,6 +19,7 @@ class APIExtension(ComfyExtension):
             GeminiImage,
             GeminiImagePreset,
             GeminiTTS,
+            GeminiSTT,
             OllamaVLM,
             OllamaLLM,
             OllamaLLMAdvanceOptions,

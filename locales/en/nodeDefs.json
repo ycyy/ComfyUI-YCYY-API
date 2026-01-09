@@ -258,6 +258,39 @@
             }
         }
     },
+    "YCYY_Gemini_STT_API": {
+        "display_name": "Gemini STT API",
+        "description": "This node uses the Google Gemini STT API to transcribe speech to text.",
+        "inputs": {
+            "audio": {
+                "name": "audio",
+                "tooltip": "The audio to transcribe"
+            },
+            "prompt": {
+                "name": "prompt",
+                "tooltip": "The prompt to guide the transcription. You can ask for specific formats or instructions."
+            },
+            "config_options": {
+                "name": "config_options",
+                "tooltip": "Optional configuration override from YCYY API Config Options"
+            },
+            "proxy_options": {
+                "name": "proxy_options",
+                "tooltip": "Optional proxy configuration override from YCYY API Proxy Options"
+            },
+            "model": {
+                "name": "model"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "String"
+            },
+            "1": {
+                "name": "String"
+            }
+        }
+    },
     "YCYY_ModelScope_Image_API": {
         "display_name": "ModelScope Image API",
         "description": "This node uses the ModelScope API to generate images.",

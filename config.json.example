@@ -8,6 +8,25 @@
             "gemini-3-pro-image-preview"
         ]
     },
+        "gemini-tts": {
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/models",
+        "api_key": "put your key here",
+        "timeout": 120,
+        "models": [
+            "gemini-2.5-flash-preview-tts",
+            "gemini-2.5-pro-preview-tts"
+        ]
+    },
+    "gemini-stt": {
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/models",
+        "api_key": "put your key here",
+        "timeout": 120,
+        "models": [
+            "gemini-2.5-flash",
+            "gemini-2.5-pro",
+            "gemini-3-flash-preview"
+        ]
+    },
     "ollama-vlm": {
         "base_url": "https://ollama.com/v1/chat/completions",
         "api_key": "",

@@ -259,6 +259,39 @@
             }
         }
     },
+    "YCYY_Gemini_STT_API": {
+        "display_name": "Gemini 语音转文本 API",
+        "description": "该节点使用 Google Gemini STT API 进行语音识别",
+        "inputs": {
+            "audio": {
+                "name": "音频",
+                "tooltip": "需要转录的音频"
+            },
+            "prompt": {
+                "name": "prompt",
+                "tooltip": "用于指导转录的提示词。您可以要求特定的格式或指令。"
+            },
+            "config_options":{
+                "name": "配置选项",
+                "tooltip": "可选配置覆盖选项，来自 YCYY API 配置选项"
+            },
+            "proxy_options":{
+                "name": "代理选项",
+                "tooltip": "可选代理覆盖选项，来自 YCYY API 代理选项"
+            },
+            "model": {
+                "name": "model"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "文本"
+            },
+            "1": {
+                "name": "文本"
+            }
+        }
+    },
     "YCYY_ModelScope_Image_API": {
         "display_name": "魔搭图像API",
         "description": "该节点使用 ModelScope API 生成图像",
