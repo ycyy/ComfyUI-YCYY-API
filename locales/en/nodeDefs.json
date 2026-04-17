@@ -46,29 +46,6 @@
             }
         }
     },
-    "YCYY_Gemini_Image_Preset": {
-        "display_name": "Gemini Image Preset",
-        "description": "This node provides presets for the Gemini Image API.",
-        "inputs": {
-            "preset": {
-                "name": "preset",
-                "tooltip": "Gemini image preset name"
-            },
-            "description": {
-                "name": "description",
-                "tooltip": "Gemini image preset description"
-            },
-            "prompt": {
-                "name": "prompt",
-                "tooltip": "Gemini image preset prompt"
-            }
-        },
-        "outputs": {
-            "0": {
-                "name": "String"
-            }
-        }
-    },
     "YCYY_Ollama_VLM_API": {
         "display_name": "Ollama VLM API",
         "description": "This node uses the Ollama VLM model for image reasoning and analysis.",
@@ -225,6 +202,69 @@
             }
         }
     },
+    "YCYY_Gemini_Image_Preset": {
+        "display_name": "Gemini Image Preset",
+        "description": "This node provides presets for the Gemini Image API.",
+        "inputs": {
+            "preset": {
+                "name": "preset",
+                "tooltip": "Gemini image preset name"
+            },
+            "description": {
+                "name": "description",
+                "tooltip": "Gemini image preset description"
+            },
+            "prompt": {
+                "name": "prompt",
+                "tooltip": "Gemini image preset prompt"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "String"
+            }
+        }
+    },
+    "YCYY_Gemini_Speaker_Options": {
+        "display_name": "Gemini Speaker Options",
+        "description": "This node builds a single speaker option for Gemini multi-speaker TTS.",
+        "inputs": {
+            "speaker": {
+                "name": "speaker",
+                "tooltip": "Speaker name used in the conversation text"
+            },
+            "voiceName": {
+                "name": "voiceName",
+                "tooltip": "The voice assigned to this speaker"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "speaker_options",
+                "tooltip": "Single speaker option item for Gemini multi-speaker TTS"
+            }
+        }
+    },
+    "YCYY_Gemini_Batch_Speakers_Options": {
+        "display_name": "Gemini Batch Speakers Options",
+        "description": "This node merges two Gemini multi-speaker option arrays.",
+        "inputs": {
+            "speaker_options1": {
+                "name": "speaker_options1",
+                "tooltip": "The first speaker options array"
+            },
+            "speaker_options2": {
+                "name": "speaker_options2",
+                "tooltip": "The second speaker options array"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "speaker_options",
+                "tooltip": "Merged speaker options array"
+            }
+        }
+    },
     "YCYY_Gemini_TTS_API": {
         "display_name": "Gemini TTS API",
         "description": "This node uses the Google Gemini TTS API to generate speech from text.",
@@ -247,6 +287,43 @@
             "voiceName": {
                 "name": "voiceName",
                 "tooltip": "The voice to use for speech synthesis"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "Audio"
+            },
+            "1": {
+                "name": "String"
+            }
+        }
+    },
+    "YCYY_Gemini_TTS_Multi_API": {
+        "display_name": "Gemini TTS Multi API",
+        "description": "This node uses the Google Gemini TTS API to generate multi-speaker speech from text.",
+        "inputs": {
+            "text": {
+                "name": "text",
+                "tooltip": "Conversation text. Include speaker labels that match the configured speaker names."
+            },
+            "speaker_options": {
+                "name": "speaker_options",
+                "tooltip": "Speaker option array from Gemini Speaker Options or Gemini Batch Speakers Options"
+            },
+            "config_options": {
+                "name": "config_options",
+                "tooltip": "Optional configuration override from YCYY API Config Options"
+            },
+            "proxy_options": {
+                "name": "proxy_options",
+                "tooltip": "Optional proxy configuration override from YCYY API Proxy Options"
+            },
+            "model": {
+                "name": "model"
+            },
+            "seed": {
+                "name": "seed",
+                "tooltip": "Seed to use for generation"
             }
         },
         "outputs": {

@@ -47,29 +47,6 @@
             }
         }
     },
-    "YCYY_Gemini_Image_Preset":{
-        "display_name": "Gemini 图像预设",
-        "description": "该节点为 Gemini 图像 API 提供预设值",
-        "inputs": {
-            "preset":{
-                "name": "预设名称",
-                "tooltip": "预设名称"
-            },
-            "description":{
-                "name": "预设描述",
-                "tooltip": "预设描述"
-            },
-            "prompt":{
-                "name": "预设提示词",
-                "tooltip": "预设提示词"
-            }
-        },
-        "outputs": {
-            "0": {
-                "name": "字符串"
-            }
-        }
-    },
     "YCYY_Ollama_VLM_API":{
         "display_name": "Ollama 视觉 API",
         "description": "这个节点使用Ollama VLM 模型进行图片推理分析",
@@ -226,6 +203,69 @@
             }
         }
     },
+    "YCYY_Gemini_Image_Preset":{
+        "display_name": "Gemini 图像预设",
+        "description": "该节点为 Gemini 图像 API 提供预设值",
+        "inputs": {
+            "preset":{
+                "name": "预设名称",
+                "tooltip": "预设名称"
+            },
+            "description":{
+                "name": "预设描述",
+                "tooltip": "预设描述"
+            },
+            "prompt":{
+                "name": "预设提示词",
+                "tooltip": "预设提示词"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "字符串"
+            }
+        }
+    },
+    "YCYY_Gemini_Speaker_Options": {
+        "display_name": "Gemini 说话人选项",
+        "description": "该节点用于构造 Gemini 多说话人 TTS 的单个说话人配置",
+        "inputs": {
+            "speaker": {
+                "name": "说话人名称",
+                "tooltip": "对话文本中使用的说话人名称"
+            },
+            "voiceName": {
+                "name": "语音名称",
+                "tooltip": "分配给该说话人的语音"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "说话人选项",
+                "tooltip": "Gemini 多说话人 TTS 的单个说话人选项"
+            }
+        }
+    },
+    "YCYY_Gemini_Batch_Speakers_Options": {
+        "display_name": "Gemini 批量说话人选项",
+        "description": "该节点用于合并两个 Gemini 多说话人选项数组",
+        "inputs": {
+            "speaker_options1": {
+                "name": "说话人选项1",
+                "tooltip": "第一个说话人选项数组"
+            },
+            "speaker_options2": {
+                "name": "说话人选项2",
+                "tooltip": "第二个说话人选项数组"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "说话人选项",
+                "tooltip": "合并后的说话人选项数组"
+            }
+        }
+    },
     "YCYY_Gemini_TTS_API": {
         "display_name": "Gemini 文本转语音 API",
         "description": "该节点使用 Google Gemini TTS API 将文本转换为语音",
@@ -248,6 +288,43 @@
             "voiceName": {
                 "name": "语音名称",
                 "tooltip": "用于语音合成的语音"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "Audio"
+            },
+            "1": {
+                "name": "String"
+            }
+        }
+    },
+    "YCYY_Gemini_TTS_Multi_API": {
+        "display_name": "Gemini 多人文本转语音 API",
+        "description": "该节点使用 Google Gemini TTS API 将文本转换为多说话人语音",
+        "inputs": {
+            "text": {
+                "name": "text",
+                "tooltip": "对话文本，需包含与配置说话人名称一致的说话人标签"
+            },
+            "speaker_options": {
+                "name": "说话人选项",
+                "tooltip": "来自 Gemini 说话人选项或 Gemini 批量说话人选项节点的说话人数组"
+            },
+            "config_options": {
+                "name": "配置选项",
+                "tooltip": "可选配置覆盖选项，来自 YCYY API 配置选项"
+            },
+            "proxy_options": {
+                "name": "代理选项",
+                "tooltip": "可选代理覆盖选项，来自 YCYY API 代理选项"
+            },
+            "model": {
+                "name": "model"
+            },
+            "seed": {
+                "name": "种子",
+                "tooltip": "用于生成的随机种子"
             }
         },
         "outputs": {

@@ -7,6 +7,40 @@ import numpy as np
 from comfy_api.latest import io
 
 
+VOICE_OPTIONS = [
+    "Zephyr",
+    "Puck",
+    "Charon",
+    "Kore",
+    "Fenrir",
+    "Leda",
+    "Orus",
+    "Aoede",
+    "Callirrhoe",
+    "Autonoe",
+    "Enceladus",
+    "Iapetus",
+    "Umbriel",
+    "Algieba",
+    "Despina",
+    "Erinome",
+    "Algenib",
+    "Rasalgethi",
+    "Laomedeia",
+    "Achernar",
+    "Alnilam",
+    "Schedar",
+    "Gacrux",
+    "Pulcherrima",
+    "Achird",
+    "Zubenelgenubi",
+    "Vindemiatrix",
+    "Sadachbia",
+    "Sadaltager",
+    "Sulafat",
+]
+
+
 class GeminiTTS(io.ComfyNode):
     """
     这个节点使用谷歌Gemini TTS API 生成语音
@@ -173,38 +207,7 @@ class GeminiTTS(io.ComfyNode):
                 ),
                 io.Combo.Input(
                     id="voiceName",
-                    options=[
-                        "Zephyr",
-                        "Puck",
-                        "Charon",
-                        "Kore",
-                        "Fenrir",
-                        "Leda",
-                        "Orus",
-                        "Aoede",
-                        "Callirrhoe",
-                        "Autonoe",
-                        "Enceladus",
-                        "Iapetus",
-                        "Umbriel",
-                        "Algieba",
-                        "Despina",
-                        "Erinome",
-                        "Algenib",
-                        "Rasalgethi",
-                        "Laomedeia",
-                        "Achernar",
-                        "Alnilam",
-                        "Schedar",
-                        "Gacrux",
-                        "Pulcherrima",
-                        "Achird",
-                        "Zubenelgenubi",
-                        "Vindemiatrix",
-                        "Sadachbia",
-                        "Sadaltager",
-                        "Sulafat"
-                    ],
+                    options=VOICE_OPTIONS,
                     default="Zephyr",
                     tooltip="The voice to use for speech synthesis"
                 ),
