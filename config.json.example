@@ -59,7 +59,9 @@
         "models": [
             "Tongyi-MAI/Z-Image-Turbo",
             "black-forest-labs/FLUX.1-Krea-dev",
-            "Qwen/Qwen-Image"
+            "Qwen/Qwen-Image-2512",
+            "ideogram-ai/ideogram-4-fp8",
+            "krea/Krea-2-Turbo"
         ]
     },
     "proxy":{
