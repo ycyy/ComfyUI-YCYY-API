@@ -64,6 +64,16 @@
             "krea/Krea-2-Turbo"
         ]
     },
+    "modelscope-image-edit": {
+        "base_url": "https://api-inference.modelscope.cn",
+        "api_key": "put your token here",
+        "timeout": 300,
+        "models": [
+            "Qwen/Qwen-Image-Edit-2511",
+            "black-forest-labs/FLUX.2-klein-9B",
+            "FireRedTeam/FireRed-Image-Edit-1.1"
+        ]
+    },
     "proxy":{
         "enable": false,
         "http": "",

@@ -10,6 +10,7 @@ from .ollama.ollama_vlm_node import *
 from .ollama.ollama_llm_node import *
 from .options.ollama_llm_advanced_options_node import *
 from .modelscope.modelscope_image_node import *
+from .modelscope.modelscope_image_edit_node import *
 from .options.config_options_node import *
 from .options.gemini_speaker_options_node import *
 from .options.gemini_batch_speakers_options_node import *
@@ -26,6 +27,7 @@ class APIExtension(ComfyExtension):
             OllamaLLM,
             OllamaVLM,
             ModelScopeImage,
+            ModelScopeImageEdit,
             ConfigOptions,
             ProxyOptions,
             GeminiImagePreset,
