@@ -1,3 +1,5 @@
+
+
 # ComfyUI-YCYY-API
 [**English**](README.md) | [**中文**](README_zh_CN.md)
 
@@ -24,6 +26,10 @@ git clone https://github.com/ycyy/ComfyUI-YCYY-API.git
 ### modelscope-image
 
 The ModelScope image generation interface only requires you to fill in the corresponding `api_key`. Other parameters remain unchanged.
+
+### proxy
+
+The `proxy` section supports optional HTTP/HTTPS proxy configuration for API requests.
 
 ## Advanced usage instructions
 
