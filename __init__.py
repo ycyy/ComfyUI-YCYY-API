@@ -15,6 +15,9 @@ from .options.config_options_node import *
 from .options.gemini_speaker_options_node import *
 from .options.gemini_batch_speakers_options_node import *
 from .options.proxy_options_node import *
+from .images.image_compare import ImageCompare
+
+WEB_DIRECTORY = "./web/js"
 
 class APIExtension(ComfyExtension):
     @override
@@ -34,6 +37,7 @@ class APIExtension(ComfyExtension):
             GeminiSpeakerOptions,
             GeminiBatchSpeakersOptions,        
             OllamaLLMAdvanceOptions, 
+            ImageCompare,
         ]
 
 

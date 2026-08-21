@@ -432,5 +432,19 @@
             "0": {"name": "Image"},
             "1": {"name": "String"}
         }
+    },
+    "YCYY_Image_Compare": {
+        "display_name": "Compare Images",
+        "description": "Compares two images side by side with a slider.",
+        "inputs": {
+            "image_a": {
+                "name": "Image A",
+                "tooltip": "The image displayed on the left side of the comparison slider."
+            },
+            "image_b": {
+                "name": "Image B",
+                "tooltip": "The image displayed on the right side of the comparison slider."
+            }
+        }
     }
 }

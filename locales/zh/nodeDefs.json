@@ -433,5 +433,19 @@
             "0": {"name": "图像"},
             "1": {"name": "字符串"}
         }
+    },
+    "YCYY_Image_Compare": {
+        "display_name": "图像对比",
+        "description": "使用滑块并排对比两张图像。",
+        "inputs": {
+            "image_a": {
+                "name": "图像 A",
+                "tooltip": "显示在对比滑块左侧的图像。"
+            },
+            "image_b": {
+                "name": "图像 B",
+                "tooltip": "显示在对比滑块右侧的图像。"
+            }
+        }
     }
 }
