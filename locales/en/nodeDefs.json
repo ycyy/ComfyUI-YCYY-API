@@ -158,13 +158,17 @@
         "display_name": "API Config Options",
         "description": "This node provides override API config options.",
         "inputs": {
-            "base_url": {
-                "name": "base_url",
-                "tooltip": "Override the API base URL"
+            "api_url": {
+                "name": "api_url",
+                "tooltip": "Override the API URL"
             },
             "api_key": {
                 "name": "api_key",
                 "tooltip": "Override the API key"
+            },
+            "api_protocol": {
+                "name": "api_protocol",
+                "tooltip": "Override the API protocol (openai-completions / openai-responses / anthropic-messages)"
             },
             "timeout": {
                 "name": "timeout",

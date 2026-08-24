@@ -49,7 +49,7 @@ class GeminiImage(io.ComfyNode):
         """
         # 如果提供了配置覆盖，则使用覆盖配置
         if config_options is not None:
-            base_url = config_options.get('base_url', '').strip()
+            base_url = config_options.get('api_url', '').strip()
             api_key = config_options.get('api_key', '').strip()
             timeout = config_options.get('timeout', 120)
 
@@ -98,8 +98,8 @@ class GeminiImage(io.ComfyNode):
 
             # 如果有配置覆盖，则使用覆盖的值（如果提供了）
             if config_options is not None:
-                if config_options.get('base_url', '').strip():
-                    base_url = config_options['base_url'].strip()
+                if config_options.get('api_url', '').strip():
+                    base_url = config_options['api_url'].strip()
                 if config_options.get('api_key', '').strip():
                     api_key = config_options['api_key'].strip()
                 if config_options.get('timeout'):

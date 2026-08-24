@@ -159,16 +159,20 @@
         "display_name": "API 配置选项",
         "description": "该节点提供了覆盖 API 配置选项的功能",
         "inputs": {
-            "base_url": {
-                "name": "base_url",
-                "tooltip": "覆盖 API 基础 URL"
+            "api_url": {
+                "name": "api_url",
+                "tooltip": "覆盖 API URL"
             },
             "api_key": {
                 "name": "api_key",
                 "tooltip": "覆盖 API 密钥"
             },
+            "api_protocol": {
+                "name": "API 协议",
+                "tooltip": "覆盖 API 协议（openai-completions / openai-responses / anthropic-messages）"
+            },
             "timeout": {
-                "name": "timeout",
+                "name": "超时时间",
                 "tooltip": "以秒为单位覆盖请求超时时间"
             }
         },

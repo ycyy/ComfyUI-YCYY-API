@@ -39,7 +39,7 @@ class ModelScopeImageEdit(io.ComfyNode):
             raise ValueError(f"Missing '{cls._CONFIG_SECTION}' section in config file")
 
         config_options = config_options or {}
-        base_url = str(config_options.get("base_url") or config.get("base_url") or "").strip()
+        base_url = str(config_options.get("api_url") or config.get("base_url") or "").strip()
         api_key = str(config_options.get("api_key") or config.get("api_key") or "").strip()
         timeout = config_options.get("timeout") or config.get("timeout", 300)
         try:
