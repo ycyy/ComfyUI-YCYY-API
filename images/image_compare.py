@@ -12,7 +12,7 @@ class ImageCompare(io.ComfyNode):
             node_id="YCYY_Image_Compare",
             display_name="Compare Images",
             description="Compares two images side by side with a slider.",
-            category="YCYY/API/image",
+            category="YCYY/API/utils",
             is_output_node=True,
             inputs=[
                 io.Image.Input("image_a", optional=True),
