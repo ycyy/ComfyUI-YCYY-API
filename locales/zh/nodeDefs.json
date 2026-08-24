@@ -159,9 +159,9 @@
         "display_name": "API 配置选项",
         "description": "该节点提供了覆盖 API 配置选项的功能",
         "inputs": {
-            "api_url": {
-                "name": "api_url",
-                "tooltip": "覆盖 API URL"
+            "base_url": {
+                "name": "base_url",
+                "tooltip": "覆盖 API 基础 URL"
             },
             "api_key": {
                 "name": "api_key",

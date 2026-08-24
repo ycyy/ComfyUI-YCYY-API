@@ -2,7 +2,7 @@ from comfy_api.latest import ComfyExtension, io
 
 class ConfigOptions(io.ComfyNode):
     """
-    这个节点用于覆盖 API 的配置参数（api_url、api_key、api_protocol、timeout）
+    这个节点用于覆盖 API 的配置参数（base_url、api_key、api_protocol、timeout）
     """
 
     @classmethod
@@ -13,9 +13,9 @@ class ConfigOptions(io.ComfyNode):
             category="YCYY/API/utils",
             inputs=[
                 io.String.Input(
-                    id="api_url",
+                    id="base_url",
                     multiline=True,
-                    tooltip="Override the API URL"
+                    tooltip="Override the API base URL"
                 ),
                 io.String.Input(
                     id="api_key",
@@ -48,13 +48,13 @@ class ConfigOptions(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, api_url, api_key, api_protocol, timeout) -> io.NodeOutput:
+    def execute(cls, base_url, api_key, api_protocol, timeout) -> io.NodeOutput:
         # 验证和清理输入
-        api_url = api_url.strip() if api_url else ""
+        base_url = base_url.strip() if base_url else ""
         api_key = api_key.strip() if api_key else ""
 
         config_options = {
-            "api_url": api_url,
+            "base_url": base_url,
             "api_key": api_key,
             "api_protocol": api_protocol,
             "timeout": timeout

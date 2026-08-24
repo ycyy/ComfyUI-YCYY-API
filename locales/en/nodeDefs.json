@@ -158,9 +158,9 @@
         "display_name": "API Config Options",
         "description": "This node provides override API config options.",
         "inputs": {
-            "api_url": {
-                "name": "api_url",
-                "tooltip": "Override the API URL"
+            "base_url": {
+                "name": "base_url",
+                "tooltip": "Override the API base URL"
             },
             "api_key": {
                 "name": "api_key",
