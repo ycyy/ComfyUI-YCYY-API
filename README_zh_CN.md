@@ -25,6 +25,14 @@ git clone https://github.com/ycyy/ComfyUI-YCYY-API.git
 
 魔搭图片生成接口只需要填写对应的 `api_key` 其他参数保持不变即可
 
+### openai-text
+
+`openai-text` 使用数组配置多个 OpenAI 或兼容接口。每项包含 `api-name`、`base_url`、`api_key`、`timeout`、`api_protocol` 和 `models`。`api_protocol` 支持 `openai-completions` 与 `openai-responses`。
+
+`base_url` 可以填写根地址（例如 `https://api.openai.com/v1`），节点会按协议追加 `/chat/completions` 或 `/responses`；也可以直接填写对应完整端点。完整端点与协议不匹配时会报错。连接 `Config Options` 后，其中的 `base_url`、`api_key`、`timeout` 和 `api_protocol` 始终覆盖配置文件值，默认协议也会产生覆盖效果。
+
+节点支持文本、图像和视频输入。视频会按当前协议的格式直接发送；如果目标 API 或协议不支持视频，接口错误会转换为明确的视频不支持提示。`files` 输入当前版本暂不支持。`OpenAI 文本高级选项（JSON）` 节点接受协议或 API 特有参数，例如 `{"temperature":0.7,"max_output_tokens":4096}`。JSON 参数不能覆盖 `model`、`messages`、`input`、`instructions`、`stream`、`api_key`、`base_url` 或 `timeout` 等请求字段。
+
 ### proxy
 
 `proxy` 支持配置http代理，适用于特殊网络环境

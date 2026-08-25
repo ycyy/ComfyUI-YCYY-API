@@ -1,4 +1,33 @@
 {
+    "YCYY_OpenAI_Text_API": {
+        "display_name": "OpenAI Text API",
+        "description": "OpenAI and OpenAI-compatible text, image and video API.",
+        "inputs": {
+            "api_name": {"name": "api_name"},
+            "model": {"name": "model"},
+            "system_prompt": {"name": "system_prompt"},
+            "user_prompt": {"name": "user_prompt"},
+            "persist_context": {"name": "persist_context", "tooltip": "Persist chat context between calls"},
+            "clear_history": {"name": "clear_history", "tooltip": "Clear the current conversation history"},
+            "images": {"name": "images", "tooltip": "Optional image input"},
+            "videos": {"name": "videos", "tooltip": "Optional video input; unsupported APIs return an error"},
+            "config_options": {"name": "config_options", "tooltip": "Configuration override"},
+            "proxy_options": {"name": "proxy_options", "tooltip": "Proxy override"},
+            "advanced_options": {"name": "advanced_options", "tooltip": "Advanced model options"}
+        },
+        "outputs": {"0": {"name": "Result"}, "1": {"name": "Conversation"}}
+    },
+    "YCYY_OpenAI_Text_Advanced_Options": {
+        "display_name": "OpenAI Text Advanced Options",
+        "description": "Pass custom JSON parameters to the OpenAI Text API.",
+        "inputs": {
+            "options_json": {
+                "name": "JSON options",
+                "tooltip": "A JSON object containing protocol/API-specific request parameters. Example:\n{\n  \"temperature\": 0.7,\n  \"reasoning\": {\n    \"effort\": \"medium\"\n  }\n}"
+            }
+        },
+        "outputs": {"0": {"name": "advanced_options"}}
+    },
     "YCYY_Gemini_Image_API": {
         "display_name": "Gemini Image API",
         "inputs": {

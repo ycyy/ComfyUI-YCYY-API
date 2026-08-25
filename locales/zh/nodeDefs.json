@@ -1,4 +1,33 @@
 {
+    "YCYY_OpenAI_Text_API": {
+        "display_name": "OpenAI 文本 API",
+        "description": "支持 OpenAI 及兼容接口的文本、图像和视频请求。",
+        "inputs": {
+            "api_name": {"name": "API 名称"},
+            "model": {"name": "模型"},
+            "system_prompt": {"name": "系统提示词"},
+            "user_prompt": {"name": "用户提示词"},
+            "persist_context": {"name": "保持上下文", "tooltip": "在多次调用之间保持对话上下文"},
+            "clear_history": {"name": "清除历史", "tooltip": "清除当前会话历史"},
+            "images": {"name": "图像", "tooltip": "可选图像输入"},
+            "videos": {"name": "视频", "tooltip": "可选视频输入；不支持的视频接口会返回错误"},
+            "config_options": {"name": "配置选项", "tooltip": "配置覆盖"},
+            "proxy_options": {"name": "代理选项", "tooltip": "代理覆盖"},
+            "advanced_options": {"name": "高级选项", "tooltip": "模型高级参数"}
+        },
+        "outputs": {"0": {"name": "结果"}, "1": {"name": "对话"}}
+    },
+    "YCYY_OpenAI_Text_Advanced_Options": {
+        "display_name": "OpenAI 文本高级选项（JSON）",
+        "description": "向 OpenAI 文本 API 传递自定义 JSON 参数。",
+        "inputs": {
+            "options_json": {
+                "name": "JSON 参数",
+                "tooltip": "填写协议或 API 特有请求参数的 JSON 对象。示例：\n{\n  \"temperature\": 0.7,\n  \"reasoning\": {\n    \"effort\": \"medium\"\n  }\n}"
+            }
+        },
+        "outputs": {"0": {"name": "高级选项"}}
+    },
     "YCYY_Gemini_Image_API": {
         "display_name": "Gemini 图像 API",
         "description": "该节点使用 Google Gemini 图像 API 生成或修改图像",

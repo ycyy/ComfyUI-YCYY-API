@@ -25,6 +25,14 @@ git clone https://github.com/ycyy/ComfyUI-YCYY-API.git
 
 The ModelScope image generation interface only requires you to fill in the corresponding `api_key`. Other parameters remain unchanged.
 
+### openai-text
+
+`openai-text` is an array of OpenAI or compatible API configurations. Each item contains `api-name`, `base_url`, `api_key`, `timeout`, `api_protocol`, and `models`. Supported protocols are `openai-completions` and `openai-responses`.
+
+`base_url` may be a root URL such as `https://api.openai.com/v1`; the node appends `/chat/completions` or `/responses` according to the protocol. It may also be a complete matching endpoint. A complete endpoint that does not match the selected protocol is rejected. When connected, `Config Options` always overrides `base_url`, `api_key`, `timeout`, and `api_protocol`, including its default protocol value.
+
+The node supports text, image, and video inputs. Video is sent directly using the current protocol's content format; if the target API or protocol does not support video, its error is surfaced as an explicit video-unsupported message. File input is not implemented in this version. The `OpenAI Text Advanced Options` node accepts a JSON object for protocol/API-specific parameters, for example `{"temperature":0.7,"max_output_tokens":4096}`. JSON options cannot override request fields such as `model`, `messages`, `input`, `instructions`, `stream`, `api_key`, `base_url`, or `timeout`.
+
 ## Advanced usage instructions
 
 API nodes support `Config Options` and `Proxy Options`. Both can be used to override configuration file parameters by configuring parameters through the front-end node.

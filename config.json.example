@@ -1,4 +1,22 @@
 {
+    "openai-text": [
+        {
+            "api-name": "OpenAI Official",
+            "base_url": "https://api.openai.com/v1",
+            "api_key": "put your key here",
+            "timeout": 120,
+            "api_protocol": "openai-completions",
+            "models": ["gpt-4o", "gpt-5"]
+        },
+        {
+            "api-name": "OpenAI Responses",
+            "base_url": "https://api.openai.com/v1/responses",
+            "api_key": "put your key here",
+            "timeout": 120,
+            "api_protocol": "openai-responses",
+            "models": ["gpt-5"]
+        }
+    ],
     "gemini-image":{
         "base_url": "https://generativelanguage.googleapis.com/v1beta/models",
         "api_key": "put your key here",
