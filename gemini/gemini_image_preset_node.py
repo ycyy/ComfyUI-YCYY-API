@@ -11,16 +11,22 @@ from typing_extensions import override
 from comfy_api.latest import ComfyExtension, io
 from ..utils.image_utils import tensor_to_base64_string
 
-# 公共函数，用于处理预设数据
+# 公共函数，用于处理预设数据（带 mtime 缓存，文件变更自动重载）
+_preset_cache = {"mtime": None, "data": []}
+
 def load_preset_data():
-    """加载预设数据从JSON配置文件"""
+    """加载预设数据从JSON配置文件（mtime变化时重新读取）"""
+    config_path = os.path.join(os.path.dirname(__file__), "gemini_image_preset.json")
     try:
-        config_path = os.path.join(os.path.dirname(__file__), "gemini_image_preset.json")
-        with open(config_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+        mtime = os.path.getmtime(config_path)
+        if _preset_cache["mtime"] != mtime:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                _preset_cache["data"] = json.load(f)
+            _preset_cache["mtime"] = mtime
+        return _preset_cache["data"]
     except Exception as e:
         print(f"Error loading preset config: {e}")
-        return []
+        return _preset_cache["data"] or []
 
 def get_preset_titles():
     """获取所有预设的标题列表"""
@@ -28,14 +34,6 @@ def get_preset_titles():
     if preset_data:
         return [preset['title'] for preset in preset_data]
     return ["None"]
-
-def get_preset_by_title(title):
-    """根据title获取对应的预设数据"""
-    preset_data = load_preset_data()
-    for preset in preset_data:
-        if preset.get('title') == title:
-            return preset
-    return None
 
 class GeminiImagePreset(io.ComfyNode):
     """
@@ -94,23 +92,8 @@ from server import PromptServer
 
 
 
-@PromptServer.instance.routes.post("/ycyy/gemini/images/preset")
-async def get_preset_data(request):
-    """获取preset数据的API端点"""
-    try:
-        data = await request.json()
-        preset_title = data.get('title')
-
-        if not preset_title:
-            return web.json_response({"error": "Missing preset title"}, status=400)
-
-        preset_data = get_preset_by_title(preset_title)
-
-        if preset_data:
-            return web.json_response(preset_data)
-        else:
-            return web.json_response({"error": f"Preset '{preset_title}' not found"}, status=404)
-
-    except Exception as e:
-        return web.json_response({"error": f"Internal server error: {str(e)}"}, status=500)
+@PromptServer.instance.routes.get("/ycyy/gemini/images/presets/all")
+async def get_all_presets(request):
+    """获取全部preset数据的API端点"""
+    return web.json_response(load_preset_data())
 
