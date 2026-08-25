@@ -10,7 +10,7 @@
             "persist_context": {"name": "保持上下文", "tooltip": "在多次调用之间保持对话上下文"},
             "clear_history": {"name": "清除历史", "tooltip": "清除当前会话历史"},
             "images": {"name": "图像", "tooltip": "可选图像输入"},
-            "videos": {"name": "视频", "tooltip": "可选视频输入；不支持的视频接口会返回错误"},
+            "videos": {"name": "视频", "tooltip": "可选视频输入；不支持视频的接口会返回错误"},
             "config_options": {"name": "配置选项", "tooltip": "配置覆盖"},
             "proxy_options": {"name": "代理选项", "tooltip": "代理覆盖"},
             "advanced_options": {"name": "高级选项", "tooltip": "模型高级参数"}
