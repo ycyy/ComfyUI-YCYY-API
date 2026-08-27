@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import codecs
 import hashlib
 import html
 import json
@@ -18,11 +19,10 @@ from .request_utils import FunctionToolsRejected, ToolChoiceRejected
 
 SKILL_OPTIONS_TYPE = "ycyy.openai_text_skill_options"
 SKILL_OPTIONS_SCHEMA_VERSION = 1
-REFERENCE_EXTENSIONS = {".md", ".txt", ".json", ".yaml", ".yml"}
 DEFAULT_LIMITS = {
     "max_skill_md_bytes": 128 * 1024,
     "max_reference_file_bytes": 256 * 1024,
-    "max_reference_total_bytes": 1024 * 1024,
+    "max_reference_total_bytes": 8 * 1024 * 1024,
     "max_disclosed_bytes_per_execution": 512 * 1024,
     "max_tool_rounds": 8,
     "max_tool_calls_per_execution": 16,
@@ -54,6 +54,32 @@ def _safe_decode(data, label):
         return data.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise ValueError(f"Skill text file is not valid UTF-8: {label}") from exc
+
+
+def _read_text_resource_candidate(path, relative, max_bytes):
+    """Return bounded UTF-8 text bytes, or None when the file is binary."""
+    try:
+        with path.open("rb") as handle:
+            data = handle.read(max_bytes + 1)
+    except OSError as exc:
+        raise ValueError(f"Unable to read Skill resource: {relative}") from exc
+
+    sample = data[:8192]
+    try:
+        codecs.getincrementaldecoder("utf-8")().decode(sample, final=False)
+    except UnicodeDecodeError:
+        return None
+    if b"\0" in sample:
+        return None
+    if len(data) > max_bytes:
+        raise ValueError(f"Resource exceeds {max_bytes} bytes: {relative}")
+    try:
+        data.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+    if b"\0" in data:
+        return None
+    return data
 
 
 def _parse_scalar(value):
@@ -200,44 +226,38 @@ def _snapshot_skill(skill_root, config):
 
     manifest = []
     total = 0
-    references_dir = root / "references"
-    if references_dir.exists():
-        resolved_refs = references_dir.resolve()
-        if not _is_within(resolved_refs, root):
-            raise ValueError("references directory escapes its Skill directory")
+    try:
+        candidates = [
+            item for item in root.rglob("*")
+            if item.is_file()
+            and item != skill_file
+            and not any(part.startswith(".") for part in item.relative_to(root).parts)
+        ]
+    except (OSError, RuntimeError) as exc:
+        raise ValueError("Unable to scan Skill resources") from exc
+
+    candidates.sort(key=lambda item: item.relative_to(root).as_posix().casefold())
+    for item in candidates:
+        relative = item.relative_to(root).as_posix()
         try:
-            candidates = sorted(
-                (
-                    item for item in references_dir.rglob("*")
-                    if item.is_file() and item.suffix.lower() in REFERENCE_EXTENSIONS
-                ),
-                key=lambda item: item.relative_to(root).as_posix().casefold(),
-            )
-        except OSError as exc:
-            raise ValueError("Unable to scan Skill references") from exc
-        for item in candidates:
-            relative = item.relative_to(root).as_posix()
-            try:
-                resolved = item.resolve()
-            except OSError as exc:
-                raise ValueError(f"Unable to resolve Skill reference: {relative}") from exc
-            if not _is_within(resolved, root):
-                raise ValueError(f"Reference escapes its Skill directory: {relative}")
-            try:
-                data = resolved.read_bytes()
-            except OSError as exc:
-                raise ValueError(f"Unable to read Skill reference: {relative}") from exc
-            if len(data) > config["max_reference_file_bytes"]:
-                raise ValueError(f"Reference exceeds {config['max_reference_file_bytes']} bytes: {relative}")
-            _safe_decode(data, relative)
-            total += len(data)
-            if total > config["max_reference_total_bytes"]:
-                raise ValueError(f"Skill references exceed {config['max_reference_total_bytes']} bytes")
-            manifest.append({
-                "path": relative,
-                "size": len(data),
-                "sha256": hashlib.sha256(data).hexdigest(),
-            })
+            resolved = item.resolve()
+        except (OSError, RuntimeError) as exc:
+            raise ValueError(f"Unable to resolve Skill resource: {relative}") from exc
+        if not _is_within(resolved, root):
+            raise ValueError(f"Resource escapes its Skill directory: {relative}")
+        data = _read_text_resource_candidate(
+            resolved, relative, config["max_reference_file_bytes"]
+        )
+        if data is None:
+            continue
+        total += len(data)
+        if total > config["max_reference_total_bytes"]:
+            raise ValueError(f"Skill resources exceed {config['max_reference_total_bytes']} bytes")
+        manifest.append({
+            "path": relative,
+            "size": len(data),
+            "sha256": hashlib.sha256(data).hexdigest(),
+        })
 
     digest_source = {
         "skill_md_sha256": hashlib.sha256(skill_bytes).hexdigest(),
@@ -445,13 +465,13 @@ def _function_definition(name):
     if name == READ_SKILL_FILE_TOOL:
         return {
             "name": name,
-            "description": "Read one exact references/... file from the loaded Skill manifest.",
+            "description": "Read one exact text resource from anywhere in the loaded Skill directory.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "path": {
                         "type": "string",
-                        "description": "Exact references/... path from the manifest.",
+                        "description": "Exact relative path from the loaded Skill manifest.",
                     }
                 },
                 "required": ["path"],
@@ -698,7 +718,7 @@ class ReadOnlySkillRuntime:
             raise SkillExecutionError("skill_snapshot_changed", str(exc)) from exc
         if result.get("error"):
             raise SkillExecutionError(
-                "pi_skill_tool_call_invalid", f"Reference is not in the manifest: {path}"
+                "pi_skill_tool_call_invalid", f"Resource is not in the manifest: {path}"
             )
         self._account(result)
         self.cache[path] = result
@@ -1072,7 +1092,7 @@ class SkillExecutionRouter:
     def _selected_skill_text(snapshot, already_loaded):
         action = (
             "The complete SKILL.md is already present in this Skill session. "
-            "Use it for this request and read only needed reference files."
+            "Use it for this request and read only needed text resources."
             if already_loaded
             else "Use the selected Skill for this request. Before answering, load the complete SKILL.md."
         )

@@ -35,15 +35,9 @@ git clone https://github.com/ycyy/ComfyUI-YCYY-API.git
 
 ### skills
 
-`OpenAI 文本 Skill 选项` 节点可以加载服务器本地的标准 `SKILL.md` 目录，并通过 `skill_options` 连接到 `OpenAI 文本 API`。`skills.paths` 配置 Skill 根目录；相对路径以本插件目录为基准，未配置时默认扫描 `skills/`。只有显式设置 `skills.allow_call=true` 才允许进入 Skill 调用链；文件发现和只读加载默认可用。
+`OpenAI 文本 Skill 选项` 节点可以发现以 `SKILL.md` 组织的本地 Skill。选择 Skill 后，通过 `skill_options` 连接到 `OpenAI 文本 API` 节点。使用 `skills.paths` 配置 Skill 位置；相对路径以本插件目录为基准，默认位置为 `skills/`。将 `skills.allow_call` 设置为 `true` 后即可启用 Skill 调用。
 
-Skill 使用带首次必载门的渐进式披露。新 Skill Session 中，模型必须先完整读取并校验 `SKILL.md`，否则最终文本会被拒绝；加载后才按需读取允许的 reference。持久 Session 可以复用相同 Skill hash 的已加载上下文，复用来源会明确记录在 `Skill Trace` 中。`scripts/` 永远不会执行，也不提供 shell、子进程、网络或文件写入能力。
-
-两种协议共用同一个内部 `pi_skill_agent` 循环和同一组只读工具。新 Session 只暴露 `load_skill`，加载后只暴露 `read_skill_file`。与 Pi Agent 一致，循环省略 `tool_choice` 并使用 provider 默认策略；在首次加载成功前，宿主侧 `skill_not_loaded` gate 会拒绝最终文本。`openai-responses` 使用自定义 `function_call`/`function_call_output` Items 传输，`openai-completions` 使用 assistant function tool call 与 `role: tool` message。这是插件本地协议，不是 OpenAI 官方 Skills 或 shell attachment；Responses 失败时不会回退到 Completions。
-
-支持的 reference 扩展名为 `.md`、`.txt`、`.json`、`.yaml` 和 `.yml`。路径、文件大小、工具轮数、调用次数和累计披露量使用固定的内部限制；公开的 `skills` 配置只包含 `paths` 与 `allow_call`。Skill 模式下，高级参数不能覆盖 Skill 工具、tool choice、状态 ID、container 或 Skill attachment。公共 Skill Options 协议版本保持为 `schema_version: 1`。
-
-Skill 调用时，`Conversation` 是完整且确定性脱敏的 Session ledger，不是摘要。每个 `model_request.payload` 和 `model_response.response` 都保留实际协议的原始结构、字段、Item 顺序、ID、reasoning、message、function call 以及 provider 扩展字段；工具生命周期和实际 continuation Item 与它们一起记录。Session 续接使用的已提交 `provider_context` 与 UI 输出均派生自同一个 `turn_commit` ledger 事件，避免出现第二份不一致的历史。`Skill 调用记录` 是独立的 JSON 审计摘要，包含所选 Skill 名称/hash、加载状态与来源、实际 tool-choice 策略、兼容重试次数、工具轮数、工具调用次数、成功读取的相对路径和错误，但不包含文件正文或真实绝对路径，也不会加入后续模型上下文。执行失败时 ComfyUI 无法生成节点输出，因此同一份 trace 摘要会附加到异常信息中。
+运行时，模型会遵循所选 Skill 的说明，并按需读取其中的文本资源。脚本文件只能作为文本读取，不会被执行。Skill 模式不能运行命令、编辑或写入文件，也不能自行访问网络。目标模型服务需要支持工具调用。
 
 ### proxy
 
