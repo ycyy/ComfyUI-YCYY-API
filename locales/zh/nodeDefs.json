@@ -26,7 +26,8 @@
         "display_name": "OpenAI 文本 Skill 选项",
         "description": "加载本地 SKILL.md，并供 OpenAI 文本 API 渐进式读取引用资料。",
         "inputs": {
-            "skill_name": {"name": "Skill 名称", "tooltip": "选择配置中发现的本地 Skill"}
+            "skill_name": {"name": "Skill 名称", "tooltip": "选择配置中发现的本地 Skill"},
+            "description": {"name": "Skill 描述", "tooltip": "当前所选 Skill 的只读描述"}
         },
         "outputs": {"0": {"name": "Skill 选项"}}
     },

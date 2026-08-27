@@ -279,6 +279,15 @@ def discover_skills(strict=True):
     return result, errors
 
 
+def get_skill_summaries():
+    """Return only the metadata needed to render the Skill selector."""
+    skills, _ = discover_skills(strict=True)
+    return [
+        {"name": skill["name"], "description": skill["description"]}
+        for skill in skills
+    ]
+
+
 
 def get_skill_snapshot(skill_name):
     skills, _ = discover_skills(strict=True)

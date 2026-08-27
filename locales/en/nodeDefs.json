@@ -26,7 +26,8 @@
         "display_name": "OpenAI Text Skill Options",
         "description": "Load a local SKILL.md package for progressive use by OpenAI Text API.",
         "inputs": {
-            "skill_name": {"name": "skill_name", "tooltip": "Select a configured local Skill"}
+            "skill_name": {"name": "skill_name", "tooltip": "Select a configured local Skill"},
+            "description": {"name": "Skill description", "tooltip": "Read-only description of the selected Skill"}
         },
         "outputs": {"0": {"name": "skill_options"}}
     },
