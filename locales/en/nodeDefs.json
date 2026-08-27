@@ -13,9 +13,22 @@
             "videos": {"name": "videos", "tooltip": "Optional video input; unsupported APIs return an error"},
             "config_options": {"name": "config_options", "tooltip": "Configuration override"},
             "proxy_options": {"name": "proxy_options", "tooltip": "Proxy override"},
-            "advanced_options": {"name": "advanced_options", "tooltip": "Advanced model options"}
+            "advanced_options": {"name": "advanced_options", "tooltip": "Advanced model options"},
+            "skill_options": {"name": "skill_options", "tooltip": "Optional progressive Skill configuration from OpenAI Text Skill Options"}
         },
-        "outputs": {"0": {"name": "Result"}, "1": {"name": "Conversation"}}
+        "outputs": {
+            "0": {"name": "Result"},
+            "1": {"name": "Conversation", "tooltip": "Full redacted Pi Skill Agent ledger for Skill calls"},
+            "2": {"name": "Skill Trace"}
+        }
+    },
+    "YCYY_OpenAI_Text_Skill_Options": {
+        "display_name": "OpenAI Text Skill Options",
+        "description": "Load a local SKILL.md package for progressive use by OpenAI Text API.",
+        "inputs": {
+            "skill_name": {"name": "skill_name", "tooltip": "Select a configured local Skill"}
+        },
+        "outputs": {"0": {"name": "skill_options"}}
     },
     "YCYY_OpenAI_Text_Advanced_Options": {
         "display_name": "OpenAI Text Advanced Options",
@@ -189,19 +202,19 @@
         "inputs": {
             "base_url": {
                 "name": "base_url",
-                "tooltip": "Override the API base URL"
+                "tooltip": "Override the API base URL; leave empty to inherit the selected API configuration"
             },
             "api_key": {
                 "name": "api_key",
-                "tooltip": "Override the API key"
+                "tooltip": "Override the API key; leave empty to inherit the selected API configuration"
             },
             "api_protocol": {
                 "name": "api_protocol",
-                "tooltip": "Override the API protocol (openai-completions / openai-responses / anthropic-messages)"
+                "tooltip": "Override the API protocol, or choose inherit to use the selected API configuration"
             },
             "timeout": {
                 "name": "timeout",
-                "tooltip": "Override the request timeout in seconds"
+                "tooltip": "Override the request timeout in seconds; 0 inherits the selected API configuration"
             }
         },
         "outputs": {

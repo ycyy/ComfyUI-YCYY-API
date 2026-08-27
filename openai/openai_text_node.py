@@ -1,13 +1,18 @@
 import json
 import hashlib
-import requests
 from aiohttp import web
 from server import PromptServer
 from comfy_api.latest import io
 
 from ..utils.config_utils import get_api_config, get_api_names, get_openai_apis
 from ..utils.image_utils import tensor_to_base64_string
-from ..utils.request_utils import get_proxy_config, resolve_endpoint, video_to_data_uri
+from ..utils.request_utils import (
+    get_proxy_config,
+    post_openai_json,
+    resolve_endpoint,
+    video_to_data_uri,
+)
+from ..utils.skill_utils import SkillRequestContext
 
 
 @PromptServer.instance.routes.get("/ycyy/openai/apis/all")
@@ -62,10 +67,16 @@ class OpenAITextAPI(io.ComfyNode):
                 io.AnyType.Input(id="config_options", optional=True),
                 io.AnyType.Input(id="proxy_options", optional=True),
                 io.AnyType.Input(id="advanced_options", optional=True),
+                io.AnyType.Input(
+                    id="skill_options",
+                    optional=True,
+                    tooltip="Optional input from OpenAI Text Skill Options",
+                ),
             ],
             outputs=[
                 io.String.Output(id="Result", display_name="Result"),
                 io.String.Output(id="Conversation", display_name="Conversation"),
+                io.String.Output(id="SkillTrace", display_name="Skill Trace"),
             ],
             hidden=[io.Hidden.unique_id],
             description="OpenAI and OpenAI-compatible text, image and video API.",
@@ -82,7 +93,6 @@ class OpenAITextAPI(io.ComfyNode):
         forbidden = protected.intersection(options)
         if forbidden:
             raise ValueError(f"Advanced options cannot override: {', '.join(sorted(forbidden))}")
-
         protocol_errors = []
         if protocol == "openai-completions":
             if "max_output_tokens" in options:
@@ -105,22 +115,64 @@ class OpenAITextAPI(io.ComfyNode):
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
     @classmethod
-    def _parse_completions(cls, response):
-        data = response.json()
+    def _resolve_api_settings(cls, api, config_options):
+        """Apply only non-empty, valid external overrides to an API config."""
+        override = config_options if isinstance(config_options, dict) else {}
+
+        base_override = override.get("base_url")
+        base_url = (
+            base_override.strip()
+            if isinstance(base_override, str) and base_override.strip()
+            else str(api["base_url"]).strip()
+        )
+
+        key_override = override.get("api_key")
+        api_key = (
+            key_override.strip()
+            if isinstance(key_override, str) and key_override.strip()
+            else str(api["api_key"]).strip()
+        )
+
+        protocol_override = override.get("api_protocol")
+        protocol = (
+            protocol_override.strip()
+            if isinstance(protocol_override, str)
+            and protocol_override.strip()
+            and protocol_override.strip() != "inherit"
+            else api["api_protocol"]
+        )
+
+        timeout = api["timeout"]
+        timeout_override = override.get("timeout")
+        if timeout_override not in (None, "") and not isinstance(timeout_override, bool):
+            try:
+                candidate = int(timeout_override)
+                if candidate > 0:
+                    timeout = candidate
+            except (TypeError, ValueError):
+                pass
+        return base_url, api_key, timeout, protocol
+
+    @classmethod
+    def _completion_message(cls, data):
         choices = data.get("choices")
         if not isinstance(choices, list) or not choices:
             raise ValueError('Completions response is missing a non-empty "choices" array')
         message = choices[0].get("message") if isinstance(choices[0], dict) else None
         if not isinstance(message, dict):
             raise ValueError('Completions response is missing "message"')
+        return message
+
+    @classmethod
+    def _parse_completions(cls, data):
+        message = cls._completion_message(data)
         content = message.get("content")
         if not isinstance(content, str) or not content.strip():
             raise ValueError("Completions response contains no final text content")
         return content
 
     @classmethod
-    def _parse_responses(cls, response):
-        data = response.json()
+    def _parse_responses(cls, data):
         status = data.get("status")
         if status != "completed":
             detail = data.get("incomplete_details") or data.get("error") or status or "unknown"
@@ -139,23 +191,21 @@ class OpenAITextAPI(io.ComfyNode):
     @classmethod
     def execute(cls, api_name, model, system_prompt, user_prompt, persist_context,
                 clear_history=False, images=None, videos=None, config_options=None,
-                proxy_options=None, advanced_options=None, unique_id=None) -> io.NodeOutput:
+                proxy_options=None, advanced_options=None, skill_options=None,
+                unique_id=None) -> io.NodeOutput:
         if not user_prompt or not user_prompt.strip():
             raise ValueError("User prompt cannot be empty")
         api = get_api_config(api_name)
-        override = config_options if isinstance(config_options, dict) else {}
-        base_url = str(override.get("base_url") or api["base_url"]).strip()
-        api_key = str(override.get("api_key") if "api_key" in override else api["api_key"]).strip()
-        timeout = override.get("timeout", api["timeout"])
-        protocol = override.get("api_protocol", api["api_protocol"])
+        base_url, api_key, timeout, protocol = cls._resolve_api_settings(api, config_options)
         endpoint = resolve_endpoint(base_url, protocol)
-        try:
-            timeout = int(timeout)
-        except (TypeError, ValueError):
-            timeout = api["timeout"]
-        key = cls._session_key(unique_id, endpoint, protocol, model, system_prompt)
+        skill = SkillRequestContext.create(skill_options, protocol)
+        session_prompt = skill.session_discriminator(system_prompt)
+        key = cls._session_key(
+            unique_id, endpoint, protocol, model, session_prompt,
+        )
         if clear_history:
             cls._conversation_history.pop(key, None)
+            skill.clear_session(key)
 
         if videos is not None:
             video_uri = video_to_data_uri(videos)
@@ -163,45 +213,69 @@ class OpenAITextAPI(io.ComfyNode):
             video_uri = None
 
         if protocol == "openai-completions":
-            history = list(cls._conversation_history.get(key, [])) if persist_context else []
-            if not history and system_prompt:
-                history.append({"role": "system", "content": system_prompt})
+            history = list(cls._conversation_history.get(key, [])) if persist_context and not skill.enabled else []
+            effective_system = system_prompt
+            request_history = [] if skill.enabled else history
+            if not request_history and effective_system:
+                request_history.append({"role": "system", "content": effective_system})
             content = [{"type": "text", "text": user_prompt}] + _image_parts(images, protocol)
             if video_uri:
                 content.append({"type": "video_url", "video_url": {"url": video_uri}})
             user_message = {"role": "user", "content": content}
-            history.append(user_message)
-            payload = {"model": model, "messages": history, "stream": False}
+            if skill.enabled:
+                request_history.append(user_message)
+            else:
+                history.append(user_message)
+            payload = {"model": model, "messages": request_history, "stream": False}
         else:
-            history = list(cls._conversation_history.get(key, [])) if persist_context else []
+            history = list(cls._conversation_history.get(key, [])) if persist_context and not skill.enabled else []
             content = [{"type": "input_text", "text": user_prompt}] + _image_parts(images, protocol)
             if video_uri:
                 content.append({"type": "input_video", "video_url": video_uri})
             current = {"role": "user", "content": content}
             history.append(current)
-            payload = {"model": model, "input": history, "stream": False}
             if system_prompt:
-                payload["instructions"] = system_prompt
+                instructions = system_prompt
+            else:
+                instructions = None
+            payload = {"model": model, "input": history, "stream": False}
+            if instructions:
+                payload["instructions"] = instructions
+        skill.validate_advanced_options(advanced_options)
         payload = cls._apply_advanced_options(payload, advanced_options, protocol)
-
         headers = {"Content-Type": "application/json"}
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"
         try:
-            response = requests.post(endpoint, headers=headers, json=payload,
-                                      timeout=timeout, proxies=get_proxy_config(proxy_options))
-            if response.status_code < 200 or response.status_code >= 300:
-                raise RuntimeError(f"API request failed ({response.status_code}): {response.text[:1000]}")
-            if not response.text.strip():
-                raise ValueError("API returned an empty response")
-            result = cls._parse_completions(response) if protocol == "openai-completions" else cls._parse_responses(response)
-        except ValueError:
-            raise
+            proxies = get_proxy_config(proxy_options)
+            if skill.enabled:
+                result, conversation = skill.execute(
+                    post_openai_json,
+                    endpoint,
+                    headers,
+                    timeout,
+                    proxies,
+                    payload,
+                    key,
+                    persist_context=persist_context,
+                )
+            else:
+                data = post_openai_json(endpoint, headers, payload, timeout, proxies)
+                result = cls._parse_completions(data) if protocol == "openai-completions" else cls._parse_responses(data)
         except Exception as exc:
             detail = str(exc)
+            if isinstance(exc, ValueError):
+                raise
             if videos is not None:
                 raise ValueError(f"Video input is not supported by this API or protocol: {detail}")
             raise ValueError(f"The API request failed: {detail}")
+
+        if skill.enabled:
+            return io.NodeOutput(
+                result,
+                json.dumps(conversation, ensure_ascii=False),
+                skill.trace_json(),
+            )
 
         if persist_context:
             if protocol == "openai-completions":
@@ -214,4 +288,8 @@ class OpenAITextAPI(io.ComfyNode):
             conversation = json.dumps(cls._conversation_history[key], ensure_ascii=False)
         else:
             conversation = "[]"
-        return io.NodeOutput(result, conversation)
+        return io.NodeOutput(
+            result,
+            conversation,
+            skill.trace_json(),
+        )

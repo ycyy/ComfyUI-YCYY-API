@@ -17,6 +17,10 @@
             "models": ["gpt-5"]
         }
     ],
+    "skills": {
+        "paths": ["skills"],
+        "allow_call": false
+    },
     "gemini-image":{
         "base_url": "https://generativelanguage.googleapis.com/v1beta/models",
         "api_key": "put your key here",

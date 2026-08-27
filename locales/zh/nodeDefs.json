@@ -13,9 +13,22 @@
             "videos": {"name": "视频", "tooltip": "可选视频输入；不支持视频的接口会返回错误"},
             "config_options": {"name": "配置选项", "tooltip": "配置覆盖"},
             "proxy_options": {"name": "代理选项", "tooltip": "代理覆盖"},
-            "advanced_options": {"name": "高级选项", "tooltip": "模型高级参数"}
+            "advanced_options": {"name": "高级选项", "tooltip": "模型高级参数"},
+            "skill_options": {"name": "Skill 选项", "tooltip": "来自 OpenAI 文本 Skill 选项节点的可选渐进式 Skill 配置"}
         },
-        "outputs": {"0": {"name": "结果"}, "1": {"name": "对话"}}
+        "outputs": {
+            "0": {"name": "结果"},
+            "1": {"name": "对话", "tooltip": "Skill 调用时输出完整脱敏的 Pi Skill Agent ledger"},
+            "2": {"name": "Skill 调用记录"}
+        }
+    },
+    "YCYY_OpenAI_Text_Skill_Options": {
+        "display_name": "OpenAI 文本 Skill 选项",
+        "description": "加载本地 SKILL.md，并供 OpenAI 文本 API 渐进式读取引用资料。",
+        "inputs": {
+            "skill_name": {"name": "Skill 名称", "tooltip": "选择配置中发现的本地 Skill"}
+        },
+        "outputs": {"0": {"name": "Skill 选项"}}
     },
     "YCYY_OpenAI_Text_Advanced_Options": {
         "display_name": "OpenAI 文本高级选项（JSON）",
@@ -190,19 +203,19 @@
         "inputs": {
             "base_url": {
                 "name": "base_url",
-                "tooltip": "覆盖 API 基础 URL"
+                "tooltip": "覆盖 API 基础 URL；留空则继承所选 API 配置"
             },
             "api_key": {
                 "name": "api_key",
-                "tooltip": "覆盖 API 密钥"
+                "tooltip": "覆盖 API 密钥；留空则继承所选 API 配置"
             },
             "api_protocol": {
                 "name": "API 协议",
-                "tooltip": "覆盖 API 协议（openai-completions / openai-responses / anthropic-messages）"
+                "tooltip": "覆盖 API 协议；选择 inherit 则继承所选 API 配置"
             },
             "timeout": {
                 "name": "超时时间",
-                "tooltip": "以秒为单位覆盖请求超时时间"
+                "tooltip": "以秒为单位覆盖请求超时时间；0 表示继承所选 API 配置"
             }
         },
         "outputs": {

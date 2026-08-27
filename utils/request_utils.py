@@ -2,11 +2,62 @@
 
 import base64
 import json
-import mimetypes
 from io import BytesIO
 from urllib.parse import urlsplit, urlunsplit
 
+import requests
+
 from .config_utils import get_config_section
+
+
+class ToolChoiceRejected(RuntimeError):
+    """The provider explicitly rejected the request's tool_choice field."""
+
+
+class FunctionToolsRejected(RuntimeError):
+    """The provider explicitly rejected the requested function tool schema."""
+
+
+def post_openai_json(endpoint, headers, payload, timeout, proxies):
+    """POST an OpenAI-compatible JSON request with stable error classification."""
+    response = requests.post(
+        endpoint, headers=headers, json=payload, timeout=timeout, proxies=proxies
+    )
+    if response.status_code < 200 or response.status_code >= 300:
+        detail = response.text[:1000]
+        lower_detail = detail.lower()
+        choice_rejected = (
+            response.status_code in (400, 404, 415, 422)
+            and "tool_choice" in payload
+            and any(marker in lower_detail for marker in ("tool_choice", "tool choice"))
+            and any(
+                marker in lower_detail
+                for marker in (
+                    "unsupported", "unknown", "unrecognized", "invalid",
+                    "not support", "not allowed", "not permitted", "extra field",
+                )
+            )
+        )
+        if choice_rejected:
+            raise ToolChoiceRejected(
+                f"API request rejected tool_choice ({response.status_code}): {detail}"
+            )
+        tool_error = response.status_code in (400, 404, 415, 422) and any(
+            marker in lower_detail
+            for marker in ("tool", "function", "unsupported", "unknown field")
+        )
+        if payload.get("tools") and tool_error:
+            raise FunctionToolsRejected(
+                f"API request failed ({response.status_code}); this API/model may not support "
+                f"the requested Skill tools: {detail}"
+            )
+        raise RuntimeError(f"API request failed ({response.status_code}): {detail}")
+    if not response.text.strip():
+        raise ValueError("API returned an empty response")
+    try:
+        return response.json()
+    except ValueError as exc:
+        raise ValueError("API returned invalid JSON") from exc
 
 
 def parse_json_options(options_json):

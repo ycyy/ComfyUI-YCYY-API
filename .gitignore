@@ -71,6 +71,15 @@ instance/
 # Sphinx documentation
 docs/_build/
 
+# Local design documents
+/docs/
+
+# Local tests
+/tests/
+
+# Local Skill packages
+/skills/
+
 # PyBuilder
 .pybuilder/
 target/
