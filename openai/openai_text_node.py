@@ -1,5 +1,7 @@
 import json
 import hashlib
+import re
+from uuid import uuid4
 from aiohttp import web
 from server import PromptServer
 from comfy_api.latest import io
@@ -9,10 +11,75 @@ from ..utils.image_utils import tensor_to_base64_string
 from ..utils.request_utils import (
     get_proxy_config,
     post_openai_json,
+    post_openai_stream,
     resolve_endpoint,
     video_to_data_uri,
 )
 from ..utils.skill_utils import SkillRequestContext
+
+
+STREAM_EVENT = "ycyy_openai_text_stream"
+
+
+def _safe_stream_error(exc):
+    detail = str(exc).replace("\r", " ").replace("\n", " ")
+    detail = re.sub(r"(?i)bearer\s+[a-z0-9._~+/-]+", "Bearer <redacted>", detail)
+    detail = re.sub(r"(?i)(api[_-]?key[=:]\s*)[^\s&]+", r"\1<redacted>", detail)
+    detail = re.sub(r"\bsk-[a-zA-Z0-9_-]{8,}\b", "sk-<redacted>", detail)
+    return detail[:300]
+
+
+class _TextStreamSink:
+    """Route text deltas to the executing ComfyUI client immediately."""
+
+    def __init__(self, node_id):
+        try:
+            from comfy_execution.utils import get_executing_context
+            context = get_executing_context()
+        except (ImportError, RuntimeError):
+            context = None
+        server = PromptServer.instance
+        context_node_id = getattr(context, "node_id", None)
+        effective_node_id = node_id if node_id is not None else context_node_id
+        self.node_id = str(effective_node_id) if effective_node_id is not None else ""
+        self.prompt_id = getattr(context, "prompt_id", None)
+        self.run_id = uuid4().hex
+        self.client_id = getattr(server, "client_id", None)
+        self.seq = 0
+        self.activities = set()
+
+    def _send(self, phase, **extra):
+        PromptServer.instance.send_sync(
+            STREAM_EVENT,
+            {
+                "node_id": self.node_id,
+                "prompt_id": self.prompt_id,
+                "run_id": self.run_id,
+                "seq": self.seq,
+                "phase": phase,
+                **extra,
+            },
+            self.client_id,
+        )
+        self.seq += 1
+
+    def start(self):
+        self._send("start")
+
+    def delta(self, value):
+        if value:
+            self._send("delta", delta=value)
+
+    def activity(self, kind):
+        if kind and kind not in self.activities:
+            self.activities.add(kind)
+            self._send("activity", activity=kind)
+
+    def end(self, value):
+        self._send("end", text=value)
+
+    def error(self, exc):
+        self._send("error", message=_safe_stream_error(exc))
 
 
 @PromptServer.instance.routes.get("/ycyy/openai/apis/all")
@@ -44,6 +111,21 @@ class OpenAITextAPI(io.ComfyNode):
     _max_history_items = 40
 
     @classmethod
+    def _runtime_node_id(cls, explicit_id=None):
+        """Resolve the client graph node id for ComfyUI V3 and direct tests."""
+        if explicit_id is not None:
+            return explicit_id
+        hidden_id = getattr(getattr(cls, "hidden", None), "unique_id", None)
+        if hidden_id is not None:
+            return hidden_id
+        try:
+            from comfy_execution.utils import get_executing_context
+            context = get_executing_context()
+        except (ImportError, RuntimeError):
+            context = None
+        return getattr(context, "node_id", None)
+
+    @classmethod
     def define_schema(cls) -> io.Schema:
         apis = get_openai_apis()
         names = [item["api-name"] for item in apis]
@@ -62,6 +144,14 @@ class OpenAITextAPI(io.ComfyNode):
                 io.String.Input(id="user_prompt", multiline=True),
                 io.Boolean.Input(id="persist_context", default=True),
                 io.Boolean.Input(id="clear_history", default=False),
+                io.Boolean.Input(
+                    id="stream",
+                    default=False,
+                    tooltip=(
+                        "If true, the model response is streamed to the client as it is "
+                        "generated using server-sent events (SSE)."
+                    ),
+                ),
                 io.Image.Input("images", optional=True, tooltip="Optional image input"),
                 io.Video.Input("videos", optional=True, tooltip="Optional video input"),
                 io.AnyType.Input(id="config_options", optional=True),
@@ -190,7 +280,7 @@ class OpenAITextAPI(io.ComfyNode):
 
     @classmethod
     def execute(cls, api_name, model, system_prompt, user_prompt, persist_context,
-                clear_history=False, images=None, videos=None, config_options=None,
+                clear_history=False, stream=False, images=None, videos=None, config_options=None,
                 proxy_options=None, advanced_options=None, skill_options=None,
                 unique_id=None) -> io.NodeOutput:
         if not user_prompt or not user_prompt.strip():
@@ -199,9 +289,15 @@ class OpenAITextAPI(io.ComfyNode):
         base_url, api_key, timeout, protocol = cls._resolve_api_settings(api, config_options)
         endpoint = resolve_endpoint(base_url, protocol)
         skill = SkillRequestContext.create(skill_options, protocol)
+        stream_enabled = bool(stream)
+        runtime_node_id = cls._runtime_node_id(unique_id)
+        if stream_enabled and skill.enabled:
+            raise ValueError(
+                "stream cannot be enabled together with skill_options in this version"
+            )
         session_prompt = skill.session_discriminator(system_prompt)
         key = cls._session_key(
-            unique_id, endpoint, protocol, model, session_prompt,
+            runtime_node_id, endpoint, protocol, model, session_prompt,
         )
         if clear_history:
             cls._conversation_history.pop(key, None)
@@ -226,7 +322,7 @@ class OpenAITextAPI(io.ComfyNode):
                 request_history.append(user_message)
             else:
                 history.append(user_message)
-            payload = {"model": model, "messages": request_history, "stream": False}
+            payload = {"model": model, "messages": request_history, "stream": stream_enabled}
         else:
             history = list(cls._conversation_history.get(key, [])) if persist_context and not skill.enabled else []
             content = [{"type": "input_text", "text": user_prompt}] + _image_parts(images, protocol)
@@ -238,7 +334,7 @@ class OpenAITextAPI(io.ComfyNode):
                 instructions = system_prompt
             else:
                 instructions = None
-            payload = {"model": model, "input": history, "stream": False}
+            payload = {"model": model, "input": history, "stream": stream_enabled}
             if instructions:
                 payload["instructions"] = instructions
         skill.validate_advanced_options(advanced_options)
@@ -259,6 +355,26 @@ class OpenAITextAPI(io.ComfyNode):
                     key,
                     persist_context=persist_context,
                 )
+            elif stream_enabled:
+                sink = _TextStreamSink(runtime_node_id)
+                sink.start()
+                try:
+                    result = post_openai_stream(
+                        endpoint,
+                        headers,
+                        payload,
+                        timeout,
+                        proxies,
+                        protocol,
+                        sink.delta,
+                        final_response_parser=cls._parse_responses,
+                        on_activity=sink.activity,
+                    )
+                except Exception as exc:
+                    sink.error(exc)
+                    raise
+                else:
+                    sink.end(result)
             else:
                 data = post_openai_json(endpoint, headers, payload, timeout, proxies)
                 result = cls._parse_completions(data) if protocol == "openai-completions" else cls._parse_responses(data)

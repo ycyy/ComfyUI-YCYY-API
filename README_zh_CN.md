@@ -33,6 +33,8 @@ git clone https://github.com/ycyy/ComfyUI-YCYY-API.git
 
 节点支持文本、图像和视频输入。视频会按当前协议的格式直接发送；如果目标 API 或协议不支持视频，接口错误会转换为明确的视频不支持提示。`files` 输入当前版本暂不支持。`OpenAI 文本高级选项（JSON）` 节点接受协议或 API 特有参数，例如 `{"temperature":0.7,"max_output_tokens":4096}`。JSON 参数不能覆盖 `model`、`messages`、`input`、`instructions`、`stream`、`api_key`、`base_url` 或 `timeout` 等请求字段。
 
+启用 `stream` 后，模型响应会在生成过程中通过服务器发送事件（SSE）流式传输到客户端。当前流式模式不能与 `skill_options` 同时启用。
+
 ### skills
 
 `OpenAI 文本 Skill 选项` 节点可以发现以 `SKILL.md` 组织的本地 Skill。选择 Skill 后，通过 `skill_options` 连接到 `OpenAI 文本 API` 节点。使用 `skills.paths` 配置 Skill 位置；相对路径以本插件目录为基准，默认位置为 `skills/`。将 `skills.allow_call` 设置为 `true` 后即可启用 Skill 调用。

@@ -9,6 +9,7 @@
             "user_prompt": {"name": "user_prompt"},
             "persist_context": {"name": "persist_context", "tooltip": "Persist chat context between calls"},
             "clear_history": {"name": "clear_history", "tooltip": "Clear the current conversation history"},
+            "stream": {"name": "stream", "tooltip": "If true, the model response is streamed to the client as it is generated using server-sent events (SSE)."},
             "images": {"name": "images", "tooltip": "Optional image input"},
             "videos": {"name": "videos", "tooltip": "Optional video input; unsupported APIs return an error"},
             "config_options": {"name": "config_options", "tooltip": "Configuration override"},
@@ -20,6 +21,16 @@
             "0": {"name": "Result"},
             "1": {"name": "Conversation", "tooltip": "Full redacted Pi Skill Agent ledger for Skill calls"},
             "2": {"name": "Skill Trace"}
+        }
+    },
+    "YCYY_Preview_API_Result": {
+        "display_name": "Preview API Result",
+        "description": "Render text as a Markdown preview with copy support.",
+        "inputs": {
+            "source": {"name": "source", "tooltip": "Markdown or plain text to preview"}
+        },
+        "outputs": {
+            "0": {"name": "text"}
         }
     },
     "YCYY_OpenAI_Text_Skill_Options": {

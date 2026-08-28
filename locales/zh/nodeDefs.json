@@ -9,6 +9,7 @@
             "user_prompt": {"name": "用户提示词"},
             "persist_context": {"name": "保持上下文", "tooltip": "在多次调用之间保持对话上下文"},
             "clear_history": {"name": "清除历史", "tooltip": "清除当前会话历史"},
+            "stream": {"name": "流式输出", "tooltip": "设为 true 时，模型响应会在生成过程中通过服务器发送事件（SSE）流式传输到客户端。"},
             "images": {"name": "图像", "tooltip": "可选图像输入"},
             "videos": {"name": "视频", "tooltip": "可选视频输入；不支持视频的接口会返回错误"},
             "config_options": {"name": "配置选项", "tooltip": "配置覆盖"},
@@ -20,6 +21,16 @@
             "0": {"name": "结果"},
             "1": {"name": "对话", "tooltip": "Skill 调用时输出完整脱敏的 Pi Skill Agent ledger"},
             "2": {"name": "Skill 调用记录"}
+        }
+    },
+    "YCYY_Preview_API_Result": {
+        "display_name": "Preview API Result",
+        "description": "将文本渲染为 Markdown 网页预览，并支持复制。",
+        "inputs": {
+            "source": {"name": "文本", "tooltip": "要预览的 Markdown 或纯文本"}
+        },
+        "outputs": {
+            "0": {"name": "文本"}
         }
     },
     "YCYY_OpenAI_Text_Skill_Options": {

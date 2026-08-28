@@ -19,6 +19,7 @@ from .openai.openai_text_node import *
 from .options.openai_text_advanced_options_node import *
 from .options.openai_text_skill_options_node import *
 from .images.image_compare import ImageCompare
+from .text.preview_api_result_node import PreviewAPIResult
 
 WEB_DIRECTORY = "./web/js"
 
@@ -44,6 +45,7 @@ class APIExtension(ComfyExtension):
             OpenAITextAPI,
             OpenAITextAdvancedOptions,
             OpenAITextSkillOptions,
+            PreviewAPIResult,
         ]
 
 
