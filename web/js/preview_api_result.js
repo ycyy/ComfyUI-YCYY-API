@@ -16,6 +16,8 @@ const MESSAGES = {
         empty: "Connect an API result and run the workflow",
         ready: "Ready",
         waiting: "Waiting for response…",
+        loading_skill: "Loading Skill…",
+        reading_skill: "Reading Skill files…",
         reasoning: "Thinking…",
         generating: "Generating…",
         displaying: "Displaying result…",
@@ -31,6 +33,8 @@ const MESSAGES = {
         empty: "连接 API 结果并运行工作流",
         ready: "就绪",
         waiting: "等待响应…",
+        loading_skill: "正在加载 Skill…",
+        reading_skill: "正在读取 Skill 文件…",
         reasoning: "正在思考…",
         generating: "正在生成…",
         displaying: "正在显示结果…",
@@ -153,7 +157,7 @@ function renderNow(state) {
     state.host.dataset.hasContent = raw ? "true" : "false";
     if (!raw) {
         state.content.replaceChildren();
-        if (!["waiting", "reasoning", "error"].includes(state.statusKey)) {
+        if (!["waiting", "loading_skill", "reading_skill", "reasoning", "error"].includes(state.statusKey)) {
             const placeholder = document.createElement("div");
             placeholder.className = "empty";
             placeholder.textContent = message("empty");
@@ -193,7 +197,10 @@ function scheduleRender(state, immediate = false) {
 function setStatus(state, key, detail = "") {
     state.statusKey = key;
     state.statusDetail = detail;
-    const visible = ["waiting", "reasoning", "generating", "displaying", "error"].includes(key);
+    const visible = [
+        "waiting", "loading_skill", "reading_skill", "reasoning",
+        "generating", "displaying", "error",
+    ].includes(key);
     state.host.dataset.state = key;
     state.status.textContent = key === "error" && detail
         ? `${message("error")}: ${detail}`
@@ -427,6 +434,8 @@ function createPreview(node) {
                 color: inherit; font-size: 11px; opacity: .72;
             }
             .preview[data-state="waiting"] .status,
+            .preview[data-state="loading_skill"] .status,
+            .preview[data-state="reading_skill"] .status,
             .preview[data-state="reasoning"] .status,
             .preview[data-state="error"][data-has-content="false"] .status {
                 left: 50%; bottom: 50%; max-width: calc(100% - 32px);
@@ -584,8 +593,11 @@ function receiveStreamEvent(event) {
         if (Number.isFinite(sequence)) state.lastSeq = sequence;
 
         if (data.phase === "activity") {
-            if (data.activity === "reasoning" && !state.receivedText) {
-                setStatus(state, "reasoning");
+            const activity = [
+                "loading_skill", "reading_skill", "reasoning", "generating",
+            ].includes(data.activity) ? data.activity : null;
+            if (activity && !state.receivedText) {
+                setStatus(state, activity);
                 scheduleRender(state, true);
             }
         } else if (data.phase === "delta") {

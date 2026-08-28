@@ -11,6 +11,7 @@ from ..utils.image_utils import tensor_to_base64_string
 from ..utils.request_utils import (
     get_proxy_config,
     post_openai_json,
+    post_openai_sse_events,
     post_openai_stream,
     resolve_endpoint,
     video_to_data_uri,
@@ -46,7 +47,7 @@ class _TextStreamSink:
         self.run_id = uuid4().hex
         self.client_id = getattr(server, "client_id", None)
         self.seq = 0
-        self.activities = set()
+        self.last_activity = None
 
     def _send(self, phase, **extra):
         PromptServer.instance.send_sync(
@@ -71,8 +72,8 @@ class _TextStreamSink:
             self._send("delta", delta=value)
 
     def activity(self, kind):
-        if kind and kind not in self.activities:
-            self.activities.add(kind)
+        if kind and kind != self.last_activity:
+            self.last_activity = kind
             self._send("activity", activity=kind)
 
     def end(self, value):
@@ -291,10 +292,6 @@ class OpenAITextAPI(io.ComfyNode):
         skill = SkillRequestContext.create(skill_options, protocol)
         stream_enabled = bool(stream)
         runtime_node_id = cls._runtime_node_id(unique_id)
-        if stream_enabled and skill.enabled:
-            raise ValueError(
-                "stream cannot be enabled together with skill_options in this version"
-            )
         session_prompt = skill.session_discriminator(system_prompt)
         key = cls._session_key(
             runtime_node_id, endpoint, protocol, model, session_prompt,
@@ -345,16 +342,31 @@ class OpenAITextAPI(io.ComfyNode):
         try:
             proxies = get_proxy_config(proxy_options)
             if skill.enabled:
-                result, conversation = skill.execute(
-                    post_openai_json,
-                    endpoint,
-                    headers,
-                    timeout,
-                    proxies,
-                    payload,
-                    key,
-                    persist_context=persist_context,
-                )
+                sink = _TextStreamSink(runtime_node_id) if stream_enabled else None
+                if sink is not None:
+                    sink.start()
+                try:
+                    result, conversation = skill.execute(
+                        post_openai_json,
+                        endpoint,
+                        headers,
+                        timeout,
+                        proxies,
+                        payload,
+                        key,
+                        persist_context=persist_context,
+                        stream=stream_enabled,
+                        post_stream=post_openai_sse_events,
+                        on_delta=sink.delta if sink is not None else None,
+                        on_activity=sink.activity if sink is not None else None,
+                    )
+                except Exception as exc:
+                    if sink is not None:
+                        sink.error(exc)
+                    raise
+                else:
+                    if sink is not None:
+                        sink.end(result)
             elif stream_enabled:
                 sink = _TextStreamSink(runtime_node_id)
                 sink.start()

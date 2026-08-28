@@ -111,6 +111,50 @@ def _completion_stream_event(event):
     )
 
 
+def post_openai_sse_events(
+    endpoint, headers, payload, timeout, proxies, on_event,
+):
+    """POST an SSE request and deliver decoded JSON events in wire order.
+
+    Protocol-specific aggregation belongs to the caller.  The boolean return
+    value reports whether the OpenAI-compatible ``[DONE]`` sentinel was seen.
+    """
+    stream_headers = {
+        **headers,
+        "Accept": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Accept-Encoding": "identity",
+    }
+    saw_done = False
+    with requests.post(
+        endpoint,
+        headers=stream_headers,
+        json=payload,
+        timeout=timeout,
+        proxies=proxies,
+        stream=True,
+    ) as response:
+        _raise_openai_http_error(response, payload)
+        content_type = response.headers.get("Content-Type", "").lower()
+        if "text/event-stream" not in content_type:
+            raise ValueError("Streaming API returned a non-SSE response")
+
+        for raw_data in _iter_sse_data(response):
+            if raw_data.strip() == "[DONE]":
+                saw_done = True
+                break
+            try:
+                event = json.loads(raw_data)
+            except json.JSONDecodeError as exc:
+                raise ValueError("Streaming API returned invalid SSE JSON") from exc
+            if not isinstance(event, dict):
+                raise ValueError("Streaming API returned a non-object SSE event")
+            if event.get("error"):
+                raise ValueError(f"Streaming API failed: {event['error']}")
+            on_event(event)
+    return saw_done
+
+
 def post_openai_stream(
     endpoint,
     headers,

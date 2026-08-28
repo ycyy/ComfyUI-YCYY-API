@@ -738,8 +738,12 @@ class ProviderAdapter:
     protocol = None
     history_field = None
 
-    def __init__(self, post_json, endpoint, headers, timeout, proxies, session):
+    def __init__(
+        self, post_json, endpoint, headers, timeout, proxies, session,
+        post_stream=None,
+    ):
         self.post_json = post_json
+        self.post_stream = post_stream
         self.endpoint = endpoint
         self.headers = headers
         self.timeout = timeout
@@ -751,10 +755,26 @@ class ProviderAdapter:
             self.endpoint, self.headers, payload, self.timeout, self.proxies
         )
 
+    def _post_stream(self, payload, on_event):
+        if self.post_stream is None:
+            raise RuntimeError("Skill streaming request helper is unavailable")
+        return self.post_stream(
+            self.endpoint, self.headers, payload, self.timeout, self.proxies, on_event
+        )
+
     def request(
-        self, base_payload, history, tools, tool_choice=None,
+        self, base_payload, history, tools, tool_choice=None, stream=False,
+        on_delta=None, on_activity=None,
     ):
         raise NotImplementedError
+
+    def final_request(
+        self, base_payload, history, stream=False, on_delta=None, on_activity=None,
+    ):
+        return self.request(
+            base_payload, history, None, stream=stream,
+            on_delta=on_delta, on_activity=on_activity,
+        )
 
     def normalize(self, data):
         raise NotImplementedError
@@ -771,19 +791,22 @@ class ResponsesProviderAdapter(ProviderAdapter):
     history_field = "input"
 
     def request(
-        self, base_payload, history, tools, tool_choice=None,
+        self, base_payload, history, tools, tool_choice=None, stream=False,
+        on_delta=None, on_activity=None,
     ):
         payload = {
             **base_payload,
             "input": deepcopy(history),
-            "tools": deepcopy(tools),
-            "parallel_tool_calls": False,
         }
-        if tool_choice is not None:
+        if tools is not None:
+            payload["tools"] = deepcopy(tools)
+            payload["parallel_tool_calls"] = False
+        if tools is not None and tool_choice is not None:
             payload["tool_choice"] = deepcopy(tool_choice)
+        payload["stream"] = bool(stream)
         self.session.append("model_request", protocol=self.protocol, payload=payload)
         try:
-            data = self._post(payload)
+            data = self._request_stream(payload, on_delta, on_activity) if stream else self._post(payload)
         except (ToolChoiceRejected, FunctionToolsRejected) as exc:
             raise SkillExecutionError(
                 "pi_skill_provider_not_supported",
@@ -791,6 +814,90 @@ class ResponsesProviderAdapter(ProviderAdapter):
             ) from exc
         self.session.append("model_response", protocol=self.protocol, response=data)
         return data
+
+    def _request_stream(self, payload, on_delta, on_activity):
+        output = {}
+        completed_response = None
+        completed = False
+
+        def slot(index):
+            return output.setdefault(index, {"type": None})
+
+        def consume(event):
+            nonlocal completed_response, completed
+            event_type = event.get("type")
+            if event_type in {"error", "response.failed", "response.incomplete"}:
+                detail = event.get("error") or event.get("response") or event
+                raise ValueError(f"Streaming API failed: {detail}")
+            if event_type == "response.completed":
+                completed_response = event.get("response")
+                completed = True
+                return
+            if event_type == "response.output_item.added":
+                index = event.get("output_index")
+                item = event.get("item")
+                if isinstance(index, int) and isinstance(item, dict):
+                    output[index] = deepcopy(item)
+                return
+            if event_type == "response.output_item.done":
+                index = event.get("output_index")
+                item = event.get("item")
+                if isinstance(index, int) and isinstance(item, dict):
+                    output[index] = deepcopy(item)
+                return
+            if event_type == "response.function_call_arguments.delta":
+                index = event.get("output_index")
+                delta = event.get("delta")
+                if isinstance(index, int) and isinstance(delta, str):
+                    item = slot(index)
+                    item["type"] = "function_call"
+                    item.setdefault("id", event.get("item_id"))
+                    item["arguments"] = str(item.get("arguments") or "") + delta
+                return
+            if event_type == "response.function_call_arguments.done":
+                index = event.get("output_index")
+                arguments = event.get("arguments")
+                if isinstance(index, int) and isinstance(arguments, str):
+                    item = slot(index)
+                    item["type"] = "function_call"
+                    item["arguments"] = arguments
+                return
+            if event_type == "response.output_text.delta":
+                index = event.get("output_index")
+                delta = event.get("delta")
+                if isinstance(index, int) and isinstance(delta, str) and delta:
+                    item = slot(index)
+                    item["type"] = "message"
+                    item.setdefault("role", "assistant")
+                    content = item.setdefault(
+                        "content", [{"type": "output_text", "text": ""}]
+                    )
+                    text_block = next(
+                        (block for block in content if block.get("type") == "output_text"),
+                        None,
+                    )
+                    if text_block is None:
+                        text_block = {"type": "output_text", "text": ""}
+                        content.append(text_block)
+                    text_block["text"] = str(text_block.get("text") or "") + delta
+                    if on_delta is not None:
+                        on_delta(delta)
+                return
+            if (
+                event_type in {"response.reasoning_text.delta", "response.reasoning_summary_text.delta"}
+                and on_activity is not None
+            ):
+                on_activity("reasoning")
+
+        saw_done = self._post_stream(payload, consume)
+        if not completed and not saw_done:
+            raise ValueError("Streaming API ended before a completion marker")
+        if isinstance(completed_response, dict):
+            return completed_response
+        return {
+            "status": "completed",
+            "output": [deepcopy(output[index]) for index in sorted(output)],
+        }
 
     def normalize(self, data):
         if not isinstance(data, dict) or data.get("status") != "completed":
@@ -851,19 +958,22 @@ class CompletionsProviderAdapter(ProviderAdapter):
     history_field = "messages"
 
     def request(
-        self, base_payload, history, tools, tool_choice=None,
+        self, base_payload, history, tools, tool_choice=None, stream=False,
+        on_delta=None, on_activity=None,
     ):
         payload = {
             **base_payload,
             "messages": deepcopy(history),
-            "tools": deepcopy(tools),
-            "parallel_tool_calls": False,
         }
-        if tool_choice is not None:
+        if tools is not None:
+            payload["tools"] = deepcopy(tools)
+            payload["parallel_tool_calls"] = False
+        if tools is not None and tool_choice is not None:
             payload["tool_choice"] = deepcopy(tool_choice)
+        payload["stream"] = bool(stream)
         self.session.append("model_request", protocol=self.protocol, payload=payload)
         try:
-            data = self._post(payload)
+            data = self._request_stream(payload, on_delta, on_activity) if stream else self._post(payload)
         except ToolChoiceRejected as exc:
             raise SkillExecutionError(
                 "compat_tool_choice_not_supported",
@@ -876,6 +986,77 @@ class CompletionsProviderAdapter(ProviderAdapter):
             ) from exc
         self.session.append("model_response", protocol=self.protocol, response=data)
         return data
+
+    def _request_stream(self, payload, on_delta, on_activity):
+        text = []
+        calls = {}
+        finish_reason = None
+
+        def merge_identity(current, incoming):
+            """Accept both one-shot and unusually fragmented id/name fields."""
+            if not incoming:
+                return current
+            if not current or incoming.startswith(current):
+                return incoming
+            if incoming == current or current.endswith(incoming):
+                return current
+            return current + incoming
+
+        def consume(event):
+            nonlocal finish_reason
+            choices = event.get("choices")
+            if not isinstance(choices, list) or not choices:
+                return
+            choice = choices[0] if isinstance(choices[0], dict) else {}
+            delta = choice.get("delta")
+            delta = delta if isinstance(delta, dict) else {}
+            content = delta.get("content")
+            if isinstance(content, str) and content:
+                text.append(content)
+                if on_delta is not None:
+                    on_delta(content)
+            reasoning = delta.get("reasoning_content")
+            if isinstance(reasoning, str) and reasoning and on_activity is not None:
+                on_activity("reasoning")
+            for position, call_delta in enumerate(delta.get("tool_calls") or []):
+                if not isinstance(call_delta, dict):
+                    continue
+                index = call_delta.get("index")
+                index = index if isinstance(index, int) else position
+                call = calls.setdefault(index, {
+                    "id": "", "type": "function",
+                    "function": {"name": "", "arguments": ""},
+                })
+                if isinstance(call_delta.get("id"), str):
+                    call["id"] = merge_identity(call["id"], call_delta["id"])
+                function = call_delta.get("function")
+                if isinstance(function, dict):
+                    if isinstance(function.get("name"), str):
+                        call["function"]["name"] = merge_identity(
+                            call["function"]["name"], function["name"]
+                        )
+                    if isinstance(function.get("arguments"), str):
+                        call["function"]["arguments"] += function["arguments"]
+            if choice.get("finish_reason") is not None:
+                finish_reason = choice.get("finish_reason")
+
+        saw_done = self._post_stream(payload, consume)
+        if finish_reason is None and not saw_done:
+            raise ValueError("Streaming API ended before a completion marker")
+        if calls and finish_reason == "length":
+            raise ValueError(
+                "Streaming API truncated a Skill tool call at the output token limit"
+            )
+        return {
+            "choices": [{
+                "finish_reason": finish_reason,
+                "message": {
+                    "role": "assistant",
+                    "content": "".join(text) or None,
+                    **({"tool_calls": [calls[index] for index in sorted(calls)]} if calls else {}),
+                },
+            }],
+        }
 
     def normalize(self, data):
         choices = data.get("choices") if isinstance(data, dict) else None
@@ -949,7 +1130,7 @@ class PiSkillAgentLoop:
         self.session = session
         self.limits = limits
 
-    def run(self, payload, trace):
+    def run(self, payload, trace, stream=False, on_delta=None, on_activity=None):
         field = self.adapter.history_field
         history = deepcopy(payload[field])
         base_payload = {
@@ -972,9 +1153,10 @@ class PiSkillAgentLoop:
                 base_payload,
                 history,
                 tools,
+                stream=stream,
+                on_activity=on_activity,
             )
             normalized = self.adapter.normalize(data)
-            self.adapter.append_native_items(history, normalized)
             self.session.append(
                 "model_output_normalized",
                 items=[
@@ -995,6 +1177,38 @@ class PiSkillAgentLoop:
                         "pi_skill_response_invalid",
                         "Provider response contains no final text",
                     )
+                if stream:
+                    # A tools-enabled response cannot be known to be the formal
+                    # answer until its stream has ended.  Keep that candidate
+                    # out of history and use a tools-free final phase so the UI
+                    # can safely display its first text delta immediately.
+                    if on_activity is not None:
+                        on_activity("generating")
+                    self.session.append(
+                        "final_phase_started", protocol=self.adapter.protocol
+                    )
+                    final_data = self.adapter.final_request(
+                        base_payload,
+                        history,
+                        stream=True,
+                        on_delta=on_delta,
+                        on_activity=on_activity,
+                    )
+                    final_normalized = self.adapter.normalize(final_data)
+                    if final_normalized.tool_calls:
+                        raise SkillExecutionError(
+                            "pi_skill_response_invalid",
+                            "Provider returned a tool call after Skill tools were removed",
+                        )
+                    if final_normalized.final_text is None:
+                        raise SkillExecutionError(
+                            "pi_skill_response_invalid",
+                            "Provider final phase contains no formal text",
+                        )
+                    self.adapter.append_native_items(history, final_normalized)
+                    normalized = final_normalized
+                else:
+                    self.adapter.append_native_items(history, normalized)
                 trace["skill_loaded"] = True
                 if trace["load_source"] == "none":
                     trace["load_source"] = "tool_call"
@@ -1003,6 +1217,7 @@ class PiSkillAgentLoop:
                 )
                 return normalized.final_text
 
+            self.adapter.append_native_items(history, normalized)
             if round_index >= self.limits["max_tool_rounds"]:
                 raise SkillExecutionError(
                     "pi_skill_tool_limit_exceeded", "Skill tool round limit exceeded"
@@ -1042,6 +1257,10 @@ class PiSkillAgentLoop:
                     "tool_call_started", call_id=call_id, name=name,
                     path=arguments.get("path"),
                 )
+                if on_activity is not None:
+                    on_activity(
+                        "loading_skill" if name == LOAD_SKILL_TOOL else "reading_skill"
+                    )
                 try:
                     output = runtime.execute(name, arguments)
                 except SkillExecutionError as exc:
@@ -1161,6 +1380,7 @@ class SkillExecutionRouter:
     def run(
         protocol, post_json, endpoint, headers, timeout, proxies, payload,
         snapshot, session_key, persist_context=True, trace=None,
+        stream=False, post_stream=None, on_delta=None, on_activity=None,
     ):
         config = get_skill_config()
         if not config.get("allow_call", False):
@@ -1216,11 +1436,18 @@ class SkillExecutionRouter:
                     else CompletionsProviderAdapter
                 )
                 adapter = adapter_type(
-                    post_json, endpoint, headers, timeout, proxies, session
+                    post_json, endpoint, headers, timeout, proxies, session,
+                    post_stream=post_stream,
                 )
                 result = PiSkillAgentLoop(
                     adapter, snapshot, session, config
-                ).run(routed_payload, active_trace)
+                ).run(
+                    routed_payload,
+                    active_trace,
+                    stream=stream,
+                    on_delta=on_delta,
+                    on_activity=on_activity,
+                )
                 return result, active_trace, session.conversation(snapshot)
             except Exception as exc:
                 session.abort(exc)
@@ -1276,7 +1503,8 @@ class SkillRequestContext:
 
     def execute(
         self, post_json, endpoint, headers, timeout, proxies, payload,
-        session_key, persist_context=True,
+        session_key, persist_context=True, stream=False, post_stream=None,
+        on_delta=None, on_activity=None,
     ):
         if not self.enabled:
             raise RuntimeError("Skill execution requires selected skill_options")
@@ -1293,6 +1521,10 @@ class SkillRequestContext:
                 session_key,
                 persist_context=persist_context,
                 trace=self.trace,
+                stream=stream,
+                post_stream=post_stream,
+                on_delta=on_delta,
+                on_activity=on_activity,
             )
             return result, conversation
         except Exception as exc:
