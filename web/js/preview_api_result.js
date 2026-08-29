@@ -236,6 +236,7 @@ function appendActivity(state, entry) {
 
 function renderActivity(state) {
     if (!state.activityPanel) return;
+    const followTail = isNearBottom(state.activityWrap);
     state.activityPanel.replaceChildren();
     const latest = state.currentActivity;
     if (latest) {
@@ -264,9 +265,12 @@ function renderActivity(state) {
     // final status and activity history remain available after rendering.
     const statusVisible = !state.status.hidden && state.statusKey !== "ready";
     state.activityWrap.hidden = !latest && !state.activityLog.length && !state.candidateText && !statusVisible;
-    state.activityToggle.hidden = state.activityLog.length < 3 && !state.candidateText;
+    // Keep the toggle available after collapsing a short log; otherwise a
+    // two-entry process history could be hidden permanently.
+    state.activityToggle.hidden = !state.activityLog.length && !state.candidateText;
     state.activityToggle.textContent = state.activityExpanded
         ? message("activityCollapse") : message("activityExpand");
+    if (followTail) state.activityWrap.scrollTop = state.activityWrap.scrollHeight;
 }
 
 function updateCopyAvailability(state) {
@@ -479,15 +483,24 @@ function createPreview(node) {
                 padding: 12px 14px 22px; overflow-wrap: anywhere;
                 scrollbar-color: color-mix(in srgb, currentColor 35%, transparent) transparent;
             }
-            .activity-wrap { order: 2; position: relative; z-index: 1; flex: 0 0 auto; width: 100%; max-height: 112px; min-height: 34px; overflow: auto; box-sizing: border-box; border: 1px solid color-mix(in srgb, var(--border-color, #484848) 80%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--comfy-input-bg, #181818) 92%, #000 8%); font-size: 11px; opacity: .88; }
-            .activity-wrap > .status { position: static; display: block; max-width: none; margin: 5px 8px 0; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: transparent; border-radius: 0; font-size: 11px; opacity: .85; }
-            .activity-title { padding: 6px 8px 0; font-size: 10px; text-transform: uppercase; letter-spacing: .04em; opacity: .55; }
+            .activity-wrap { order: 2; position: relative; z-index: 1; flex: 0 0 auto; width: 100%; max-height: 140px; min-height: 34px; overflow: auto; box-sizing: border-box; border: 1px solid color-mix(in srgb, var(--border-color, #484848) 80%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--comfy-input-bg, #181818) 92%, #000 8%); font-size: 12px; opacity: .88; }
+            .activity-wrap > .status { position: static; display: block; max-width: none; margin: 5px 8px 0; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: transparent; border-radius: 0; font-size: 12px; opacity: .85; }
+            .activity-title { padding: 6px 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; opacity: .55; }
             .activity-panel { padding: 2px 8px 2px; }
             .activity-current { color: var(--input-text, var(--fg-color, #ddd)); font-weight: 600; }
             .activity-log { margin-top: 2px; }
             .activity-entry, .activity-candidate { white-space: pre-wrap; overflow-wrap: anywhere; opacity: .72; }
-            .activity-candidate { max-height: 42px; overflow: hidden; color: color-mix(in srgb, currentColor 78%, #7c8cf8 22%); }
-            .activity-toggle { border: 0; background: transparent; color: inherit; opacity: .7; cursor: pointer; padding: 2px 5px 5px; font-size: 10px; }
+            .activity-candidate { color: color-mix(in srgb, currentColor 78%, #7c8cf8 22%); }
+            .activity-toggle {
+                position: sticky; bottom: 5px; z-index: 2; display: block;
+                margin: 3px 8px 5px auto; padding: 3px 8px;
+                border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+                border-radius: 5px;
+                background: color-mix(in srgb, var(--comfy-input-bg, #181818) 94%, currentColor 6%);
+                box-shadow: 0 1px 5px color-mix(in srgb, #000 45%, transparent);
+                color: inherit; opacity: .78; cursor: pointer; font-size: 11px;
+            }
+            .activity-toggle:hover { opacity: 1; background: color-mix(in srgb, var(--comfy-input-bg, #181818) 84%, currentColor 16%); }
             .empty { height: 100%; display: grid; place-items: center; text-align: center; opacity: .42; }
             .copy {
                 position: absolute; z-index: 2; top: 6px; right: 8px; width: 28px; height: 28px;
