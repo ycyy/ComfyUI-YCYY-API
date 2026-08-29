@@ -170,7 +170,6 @@ function typingRate(state) {
 function renderNow(state) {
     const followTail = isNearBottom(state.content);
     const raw = state.displayedText || "";
-    state.host.dataset.hasContent = raw ? "true" : "false";
     if (!raw) {
         state.content.replaceChildren();
         if (!["waiting", "loading_skill", "reading_skill", "reasoning", "drafting", "tool_running", "promoting", "generating", "displaying", "error"].includes(state.statusKey)) {
@@ -184,6 +183,7 @@ function renderNow(state) {
         if (!parser?.parse) {
             state.content.textContent = raw;
             setStatus(state, "error", "marked.umd.js unavailable");
+            renderActivity(state);
         } else {
             const html = parser.parse(raw, { gfm: true, breaks: true });
             state.content.innerHTML = sanitizeMarkedHtml(html);
@@ -222,16 +222,11 @@ function setStatus(state, key, detail = "") {
         ? `${message("error")}: ${detail}`
         : message(key);
     state.status.hidden = !visible;
-    // Status is rendered in the dedicated lower process box, so update its
-    // visibility whenever the state changes.
-    renderActivity(state);
 }
 
 function appendActivity(state, entry) {
-    state.activityLog.push({ ...entry, time: Date.now() });
+    state.activityLog.push(entry);
     if (state.activityLog.length > 20) state.activityLog.splice(0, state.activityLog.length - 20);
-    state.activityExpanded = true;
-    renderActivity(state);
 }
 
 function renderActivity(state) {
@@ -274,9 +269,7 @@ function renderActivity(state) {
 }
 
 function updateCopyAvailability(state) {
-    // Only confirmed answer text is copyable. Intermediate candidate text,
-    // reasoning and activity records must never leak through the copy action.
-    state.copyButton.disabled = !(state.answerText || state.finalText);
+    state.copyButton.disabled = !state.finalText;
 }
 
 function setCopyState(state, copyState) {
@@ -306,7 +299,7 @@ function showCopyToast(success) {
 }
 
 async function copyRawText(state) {
-    const text = state.answerText || state.finalText;
+    const text = state.finalText;
     if (!text) return;
     try {
         if (navigator.clipboard?.writeText && window.isSecureContext) {
@@ -356,7 +349,6 @@ function finishTypingIfReady(state) {
     state.receivedText = state.finalText;
     state.streaming = false;
     state.activeRunId = null;
-    state.promptId = null;
     if (state.terminalError) {
         setStatus(state, "error", state.terminalError);
     } else {
@@ -523,7 +515,7 @@ function createPreview(node) {
             .preview[data-state="loading_skill"] .status,
             .preview[data-state="reading_skill"] .status,
             .preview[data-state="reasoning"] .status,
-            .preview[data-state="error"][data-has-content="false"] .status { transform: none; }
+            .preview[data-state="error"] .status { transform: none; }
             .preview[data-state="error"] .status { color: #fca5a5; opacity: .95; }
             h1, h2, h3, h4, h5, h6 { margin: 1.1em 0 .55em; line-height: 1.25; }
             h1 { font-size: 1.55em; } h2 { font-size: 1.35em; } h3 { font-size: 1.18em; }
@@ -546,7 +538,7 @@ function createPreview(node) {
                 .preview[data-state="displaying"] .content::after { display: none; }
             }
         </style>
-        <div class="preview" data-state="idle" data-has-content="false">
+        <div class="preview" data-state="idle">
             <section class="result-wrap">
                 <div class="content"></div>
                 <button class="copy" type="button" data-copy-state="idle">
@@ -564,14 +556,12 @@ function createPreview(node) {
 
     const state = {
         displayedText: "",
-        answerText: "",
         receivedText: "",
         finalText: "",
         pendingUnits: [],
         sourceEnded: false,
         terminalError: "",
         activeRunId: null,
-        promptId: null,
         lastSeq: -1,
         streaming: false,
         typingFrame: null,
@@ -590,7 +580,7 @@ function createPreview(node) {
         host: shadow.querySelector(".preview"),
         content: shadow.querySelector(".content"),
         status: shadow.querySelector(".activity-wrap .status"),
-        copyButton: shadow.querySelector("button"),
+        copyButton: shadow.querySelector(".copy"),
         activityWrap: shadow.querySelector(".activity-wrap"),
         activityTitle: shadow.querySelector(".activity-title"),
         activityPanel: shadow.querySelector(".activity-panel"),
@@ -631,6 +621,28 @@ function disposePreview(node) {
     node._ycyyApiResultPreview = null;
 }
 
+function resetStreamState(state, data, sequence) {
+    stopTyping(state);
+    state.activeRunId = data.run_id;
+    state.lastSeq = Number.isFinite(sequence) ? sequence : -1;
+    state.displayedText = "";
+    state.receivedText = "";
+    state.finalText = "";
+    state.candidateText = "";
+    state.activityLog = [];
+    state.currentActivity = null;
+    state.activityExpanded = true;
+    state.currentRound = 0;
+    state.pendingUnits = [];
+    state.sourceEnded = false;
+    state.terminalError = "";
+    state.streaming = true;
+    setStatus(state, "waiting");
+    renderActivity(state);
+    updateCopyAvailability(state);
+    scheduleRender(state, true);
+}
+
 function setFinalText(node, value) {
     const state = createPreview(node);
     const text = String(value ?? "");
@@ -641,7 +653,6 @@ function setFinalText(node, value) {
     const unchanged = state.displayedText === text && !state.streaming;
     stopTyping(state);
     state.displayedText = text;
-    state.answerText = text;
     state.receivedText = text;
     state.finalText = text;
     state.pendingUnits = [];
@@ -649,8 +660,8 @@ function setFinalText(node, value) {
     state.terminalError = "";
     state.streaming = false;
     state.activeRunId = null;
-    state.promptId = null;
     setStatus(state, "complete");
+    renderActivity(state);
     updateCopyAvailability(state);
     if (!unchanged) scheduleRender(state, true);
 }
@@ -678,28 +689,7 @@ function receiveStreamEvent(event) {
         const state = createPreview(node);
         const sequence = Number(data.seq);
         if (data.phase === "start") {
-            stopTyping(state);
-            state.activeRunId = data.run_id;
-            state.promptId = data.prompt_id ?? null;
-            state.lastSeq = Number.isFinite(sequence) ? sequence : -1;
-            state.displayedText = "";
-            state.answerText = "";
-            state.receivedText = "";
-            state.finalText = "";
-            state.candidateText = "";
-            state.activityLog = [];
-            state.currentActivity = null;
-            state.activityExpanded = false;
-            state.currentRound = 0;
-            state.roundHasToolCall = false;
-            state.pendingUnits = [];
-            state.sourceEnded = false;
-            state.terminalError = "";
-            state.streaming = true;
-            setStatus(state, "waiting");
-            renderActivity(state);
-            updateCopyAvailability(state);
-            scheduleRender(state, true);
+            resetStreamState(state, data, sequence);
             continue;
         }
         if (state.activeRunId !== data.run_id) continue;
@@ -708,41 +698,40 @@ function receiveStreamEvent(event) {
 
         if (data.phase === "round_start") {
             state.currentRound = Number(data.round) || 0;
-            state.roundHasToolCall = false;
             state.candidateText = "";
             state.currentActivity = { label: message("waiting"), detail: `Round ${state.currentRound + 1}` };
             appendActivity(state, { type: "round", text: `Round ${state.currentRound + 1}` });
             setStatus(state, "waiting");
+            renderActivity(state);
         } else if (data.phase === "candidate_delta") {
             state.candidateText += String(data.delta || "");
             state.currentActivity = { label: message("drafting"), detail: `Round ${state.currentRound + 1}` };
             setStatus(state, "drafting");
             renderActivity(state);
         } else if (data.phase === "tool_call_start") {
-            state.roundHasToolCall = true;
             const detail = data.path ? `${data.tool} · ${data.path}` : data.tool;
             state.currentActivity = { label: message("toolRunning"), detail };
             appendActivity(state, { type: "tool", text: `${message("toolRunning")} ${detail}` });
             setStatus(state, "tool_running");
+            renderActivity(state);
         } else if (data.phase === "tool_call_end") {
             const detail = data.path ? `${data.tool} · ${data.path}` : data.tool;
             appendActivity(state, { type: "tool", text: `${detail} · ${data.status || "success"}` });
             renderActivity(state);
         } else if (data.phase === "round_end") {
             const hasTools = Boolean(data.has_tool_calls);
-            state.roundHasToolCall = hasTools;
             if (hasTools) {
                 state.candidateText = "";
                 state.currentActivity = { label: message("toolRunning"), detail: `Round ${state.currentRound + 1} complete` };
             } else {
-                state.answerText = state.candidateText;
-                state.receivedText = state.answerText;
-                state.finalText = state.answerText;
+                const promotedText = state.candidateText;
+                state.receivedText = promotedText;
+                state.finalText = promotedText;
                 state.candidateText = "";
                 state.currentActivity = { label: message("generating"), detail: "" };
-                setStatus(state, state.answerText ? "promoting" : "generating");
-                if (state.answerText) {
-                    state.pendingUnits = splitTextUnits(state.answerText);
+                setStatus(state, promotedText ? "promoting" : "generating");
+                if (promotedText) {
+                    state.pendingUnits = splitTextUnits(promotedText);
                     state.displayedText = "";
                     state.sourceEnded = false;
                     startTyping(state);
@@ -752,21 +741,24 @@ function receiveStreamEvent(event) {
             scheduleRender(state, true);
         } else if (data.phase === "activity") {
             const activity = [
-                "loading_skill", "reading_skill", "reasoning", "generating",
+                "loading_skill", "reading_skill", "reasoning",
             ].includes(data.activity) ? data.activity : null;
             if (activity && !state.receivedText) {
                 setStatus(state, activity);
+                renderActivity(state);
                 scheduleRender(state, true);
             }
         } else if (data.phase === "delta") {
-            if (!state.receivedText) setStatus(state, "generating");
+            if (!state.receivedText) {
+                setStatus(state, "generating");
+                renderActivity(state);
+            }
             enqueueDelta(state, data.delta);
         } else if (data.phase === "end") {
             if (state.pendingUnits.length || state.displayedText !== String(data.text ?? state.receivedText)) {
                 setStatus(state, "displaying");
             }
             enqueueFinalText(state, data.text ?? state.receivedText);
-            state.answerText = String(data.text ?? state.receivedText);
             state.candidateText = "";
             state.currentActivity = null;
             renderActivity(state);
@@ -775,6 +767,7 @@ function receiveStreamEvent(event) {
             state.finalText = state.receivedText;
             state.terminalError = data.message || "unknown";
             setStatus(state, "error", state.terminalError);
+            renderActivity(state);
             updateCopyAvailability(state);
             scheduleRender(state, true);
             startTyping(state);
@@ -790,6 +783,7 @@ function refreshLocale() {
         if (state.activityTitle) state.activityTitle.textContent = message("processTitle");
         setCopyState(state, state.copyButton.dataset.copyState || "idle");
         setStatus(state, state.statusKey, state.statusDetail);
+        renderActivity(state);
         scheduleRender(state);
     }
 }

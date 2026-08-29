@@ -6,7 +6,7 @@ from aiohttp import web
 from server import PromptServer
 from comfy_api.latest import io
 
-from ..utils.config_utils import get_api_config, get_api_names, get_openai_apis
+from ..utils.config_utils import get_api_config, get_openai_apis
 from ..utils.image_utils import tensor_to_base64_string
 from ..utils.request_utils import (
     get_proxy_config,
@@ -343,10 +343,9 @@ class OpenAITextAPI(io.ComfyNode):
 
         if protocol == "openai-completions":
             history = list(cls._conversation_history.get(key, [])) if persist_context and not skill.enabled else []
-            effective_system = system_prompt
             request_history = [] if skill.enabled else history
-            if not request_history and effective_system:
-                request_history.append({"role": "system", "content": effective_system})
+            if not request_history and system_prompt:
+                request_history.append({"role": "system", "content": system_prompt})
             content = [{"type": "text", "text": user_prompt}] + _image_parts(images, protocol)
             if video_uri:
                 content.append({"type": "video_url", "video_url": {"url": video_uri}})
