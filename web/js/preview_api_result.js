@@ -20,6 +20,14 @@ const MESSAGES = {
         reading_skill: "Reading Skill files…",
         reasoning: "Thinking…",
         generating: "Generating…",
+        drafting: "Model note…",
+        toolRunning: "Tool running…",
+        tool_running: "Tool running…",
+        promoting: "Preparing answer…",
+        activityExpand: "Show activity",
+        activityCollapse: "Hide activity",
+        processTitle: "Process & status",
+        intermediate: "Model note",
         displaying: "Displaying result…",
         complete: "Complete",
         copy: "Copy",
@@ -37,6 +45,14 @@ const MESSAGES = {
         reading_skill: "正在读取 Skill 文件…",
         reasoning: "正在思考…",
         generating: "正在生成…",
+        drafting: "模型中间说明…",
+        toolRunning: "工具执行中…",
+        tool_running: "工具执行中…",
+        promoting: "正在整理答案…",
+        activityExpand: "展开过程",
+        activityCollapse: "收起过程",
+        processTitle: "过程与状态",
+        intermediate: "模型中间说明",
         displaying: "正在显示结果…",
         complete: "完成",
         copy: "复制",
@@ -157,7 +173,7 @@ function renderNow(state) {
     state.host.dataset.hasContent = raw ? "true" : "false";
     if (!raw) {
         state.content.replaceChildren();
-        if (!["waiting", "loading_skill", "reading_skill", "reasoning", "error"].includes(state.statusKey)) {
+        if (!["waiting", "loading_skill", "reading_skill", "reasoning", "drafting", "tool_running", "promoting", "generating", "displaying", "error"].includes(state.statusKey)) {
             const placeholder = document.createElement("div");
             placeholder.className = "empty";
             placeholder.textContent = message("empty");
@@ -199,17 +215,64 @@ function setStatus(state, key, detail = "") {
     state.statusDetail = detail;
     const visible = [
         "waiting", "loading_skill", "reading_skill", "reasoning",
-        "generating", "displaying", "error",
+        "drafting", "tool_running", "promoting", "generating", "displaying", "complete", "error",
     ].includes(key);
     state.host.dataset.state = key;
     state.status.textContent = key === "error" && detail
         ? `${message("error")}: ${detail}`
         : message(key);
     state.status.hidden = !visible;
+    // Status is rendered in the dedicated lower process box, so update its
+    // visibility whenever the state changes.
+    renderActivity(state);
+}
+
+function appendActivity(state, entry) {
+    state.activityLog.push({ ...entry, time: Date.now() });
+    if (state.activityLog.length > 20) state.activityLog.splice(0, state.activityLog.length - 20);
+    state.activityExpanded = true;
+    renderActivity(state);
+}
+
+function renderActivity(state) {
+    if (!state.activityPanel) return;
+    state.activityPanel.replaceChildren();
+    const latest = state.currentActivity;
+    if (latest) {
+        const current = document.createElement("div");
+        current.className = "activity-current";
+        current.textContent = latest.detail ? `${latest.label} · ${latest.detail}` : latest.label;
+        state.activityPanel.append(current);
+    }
+    const log = document.createElement("div");
+    log.className = "activity-log";
+    const entries = state.activityExpanded ? state.activityLog : state.activityLog.slice(-2);
+    for (const entry of entries) {
+        const row = document.createElement("div");
+        row.className = `activity-entry activity-${entry.type || "info"}`;
+        row.textContent = entry.text || "";
+        log.append(row);
+    }
+    if (state.candidateText) {
+        const candidate = document.createElement("div");
+        candidate.className = "activity-candidate";
+        candidate.textContent = `${message("intermediate")}: ${state.candidateText}`;
+        log.append(candidate);
+    }
+    state.activityPanel.append(log);
+    // Keep the process box visible for the complete state as well, so the
+    // final status and activity history remain available after rendering.
+    const statusVisible = !state.status.hidden && state.statusKey !== "ready";
+    state.activityWrap.hidden = !latest && !state.activityLog.length && !state.candidateText && !statusVisible;
+    state.activityToggle.hidden = state.activityLog.length < 3 && !state.candidateText;
+    state.activityToggle.textContent = state.activityExpanded
+        ? message("activityCollapse") : message("activityExpand");
 }
 
 function updateCopyAvailability(state) {
-    state.copyButton.disabled = !(state.finalText || state.receivedText || state.displayedText);
+    // Only confirmed answer text is copyable. Intermediate candidate text,
+    // reasoning and activity records must never leak through the copy action.
+    state.copyButton.disabled = !(state.answerText || state.finalText);
 }
 
 function setCopyState(state, copyState) {
@@ -239,7 +302,7 @@ function showCopyToast(success) {
 }
 
 async function copyRawText(state) {
-    const text = state.sourceEnded ? state.finalText : (state.receivedText || state.displayedText);
+    const text = state.answerText || state.finalText;
     if (!text) return;
     try {
         if (navigator.clipboard?.writeText && window.isSecureContext) {
@@ -293,8 +356,10 @@ function finishTypingIfReady(state) {
     if (state.terminalError) {
         setStatus(state, "error", state.terminalError);
     } else {
+        state.currentActivity = null;
         setStatus(state, "complete");
     }
+    renderActivity(state);
     updateCopyAvailability(state);
     scheduleRender(state, true);
     return true;
@@ -399,17 +464,30 @@ function createPreview(node) {
         <style>
             :host { display: block; width: 100%; height: 100%; }
             .preview {
-                position: relative; height: 100%; min-height: 200px; overflow: hidden;
-                box-sizing: border-box; border: 1px solid var(--border-color, #484848);
-                border-radius: 8px; background: var(--comfy-input-bg, #181818);
+                position: relative; display: flex; flex-direction: column; gap: 7px; height: 100%; min-height: 200px; overflow: hidden;
+                box-sizing: border-box; border: 0; border-radius: 8px;
                 color: var(--input-text, var(--fg-color, #ddd));
                 font: 13px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+            }
+            .result-wrap {
+                order: 1; position: relative; flex: 1 1 auto; min-height: 0; width: 100%; overflow: hidden;
+                box-sizing: border-box; border: 1px solid var(--border-color, #484848); border-radius: 8px;
+                background: var(--comfy-input-bg, #181818);
             }
             .content {
                 width: 100%; height: 100%; overflow: auto; box-sizing: border-box;
                 padding: 12px 14px 22px; overflow-wrap: anywhere;
                 scrollbar-color: color-mix(in srgb, currentColor 35%, transparent) transparent;
             }
+            .activity-wrap { order: 2; position: relative; z-index: 1; flex: 0 0 auto; width: 100%; max-height: 112px; min-height: 34px; overflow: auto; box-sizing: border-box; border: 1px solid color-mix(in srgb, var(--border-color, #484848) 80%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--comfy-input-bg, #181818) 92%, #000 8%); font-size: 11px; opacity: .88; }
+            .activity-wrap > .status { position: static; display: block; max-width: none; margin: 5px 8px 0; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: transparent; border-radius: 0; font-size: 11px; opacity: .85; }
+            .activity-title { padding: 6px 8px 0; font-size: 10px; text-transform: uppercase; letter-spacing: .04em; opacity: .55; }
+            .activity-panel { padding: 2px 8px 2px; }
+            .activity-current { color: var(--input-text, var(--fg-color, #ddd)); font-weight: 600; }
+            .activity-log { margin-top: 2px; }
+            .activity-entry, .activity-candidate { white-space: pre-wrap; overflow-wrap: anywhere; opacity: .72; }
+            .activity-candidate { max-height: 42px; overflow: hidden; color: color-mix(in srgb, currentColor 78%, #7c8cf8 22%); }
+            .activity-toggle { border: 0; background: transparent; color: inherit; opacity: .7; cursor: pointer; padding: 2px 5px 5px; font-size: 10px; }
             .empty { height: 100%; display: grid; place-items: center; text-align: center; opacity: .42; }
             .copy {
                 position: absolute; z-index: 2; top: 6px; right: 8px; width: 28px; height: 28px;
@@ -427,20 +505,12 @@ function createPreview(node) {
             .copy[data-copy-state="copied"] .check-icon { display: block; }
             .copy[data-copy-state="failed"] { color: #f87171; opacity: 1; }
             .copy:disabled { display: none; }
-            .status {
-                position: absolute; z-index: 2; left: 10px; bottom: 7px; max-width: calc(100% - 20px);
-                overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none;
-                padding: 2px 7px; border-radius: 999px; background: color-mix(in srgb, var(--comfy-input-bg, #181818) 84%, currentColor 16%);
-                color: inherit; font-size: 11px; opacity: .72;
-            }
+            .status { color: inherit; pointer-events: none; }
             .preview[data-state="waiting"] .status,
             .preview[data-state="loading_skill"] .status,
             .preview[data-state="reading_skill"] .status,
             .preview[data-state="reasoning"] .status,
-            .preview[data-state="error"][data-has-content="false"] .status {
-                left: 50%; bottom: 50%; max-width: calc(100% - 32px);
-                transform: translate(-50%, 50%); padding: 5px 10px;
-            }
+            .preview[data-state="error"][data-has-content="false"] .status { transform: none; }
             .preview[data-state="error"] .status { color: #fca5a5; opacity: .95; }
             h1, h2, h3, h4, h5, h6 { margin: 1.1em 0 .55em; line-height: 1.25; }
             h1 { font-size: 1.55em; } h2 { font-size: 1.35em; } h3 { font-size: 1.18em; }
@@ -464,16 +534,24 @@ function createPreview(node) {
             }
         </style>
         <div class="preview" data-state="idle" data-has-content="false">
-            <button class="copy" type="button" data-copy-state="idle">
+            <section class="result-wrap">
+                <div class="content"></div>
+                <button class="copy" type="button" data-copy-state="idle">
                 <svg class="copy-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"></path></svg>
                 <svg class="check-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg>
-            </button>
-            <div class="content"></div>
-            <span class="status" hidden aria-live="polite"></span>
+                </button>
+            </section>
+            <section class="activity-wrap" hidden>
+                <div class="activity-title"></div>
+                <span class="status" hidden aria-live="polite"></span>
+                <div class="activity-panel"></div>
+                <button class="activity-toggle" type="button" hidden></button>
+            </section>
         </div>`;
 
     const state = {
         displayedText: "",
+        answerText: "",
         receivedText: "",
         finalText: "",
         pendingUnits: [],
@@ -491,16 +569,30 @@ function createPreview(node) {
         copyTimer: null,
         statusKey: "ready",
         statusDetail: "",
+        candidateText: "",
+        activityLog: [],
+        currentActivity: null,
+        activityExpanded: false,
         root,
         host: shadow.querySelector(".preview"),
         content: shadow.querySelector(".content"),
-        status: shadow.querySelector(".status"),
+        status: shadow.querySelector(".activity-wrap .status"),
         copyButton: shadow.querySelector("button"),
+        activityWrap: shadow.querySelector(".activity-wrap"),
+        activityTitle: shadow.querySelector(".activity-title"),
+        activityPanel: shadow.querySelector(".activity-panel"),
+        activityToggle: shadow.querySelector(".activity-toggle"),
     };
     setStatus(state, "ready");
+    state.activityTitle.textContent = message("processTitle");
     setCopyState(state, "idle");
     updateCopyAvailability(state);
     state.copyButton.addEventListener("click", () => copyRawText(state));
+    state.activityToggle.addEventListener("click", () => {
+        state.activityExpanded = !state.activityExpanded;
+        renderActivity(state);
+    });
+    renderActivity(state);
     root.addEventListener("pointerdown", event => event.stopPropagation());
     root.addEventListener("wheel", event => event.stopPropagation(), { passive: true });
 
@@ -536,6 +628,7 @@ function setFinalText(node, value) {
     const unchanged = state.displayedText === text && !state.streaming;
     stopTyping(state);
     state.displayedText = text;
+    state.answerText = text;
     state.receivedText = text;
     state.finalText = text;
     state.pendingUnits = [];
@@ -577,13 +670,21 @@ function receiveStreamEvent(event) {
             state.promptId = data.prompt_id ?? null;
             state.lastSeq = Number.isFinite(sequence) ? sequence : -1;
             state.displayedText = "";
+            state.answerText = "";
             state.receivedText = "";
             state.finalText = "";
+            state.candidateText = "";
+            state.activityLog = [];
+            state.currentActivity = null;
+            state.activityExpanded = false;
+            state.currentRound = 0;
+            state.roundHasToolCall = false;
             state.pendingUnits = [];
             state.sourceEnded = false;
             state.terminalError = "";
             state.streaming = true;
             setStatus(state, "waiting");
+            renderActivity(state);
             updateCopyAvailability(state);
             scheduleRender(state, true);
             continue;
@@ -592,7 +693,51 @@ function receiveStreamEvent(event) {
         if (Number.isFinite(sequence) && sequence <= state.lastSeq) continue;
         if (Number.isFinite(sequence)) state.lastSeq = sequence;
 
-        if (data.phase === "activity") {
+        if (data.phase === "round_start") {
+            state.currentRound = Number(data.round) || 0;
+            state.roundHasToolCall = false;
+            state.candidateText = "";
+            state.currentActivity = { label: message("waiting"), detail: `Round ${state.currentRound + 1}` };
+            appendActivity(state, { type: "round", text: `Round ${state.currentRound + 1}` });
+            setStatus(state, "waiting");
+        } else if (data.phase === "candidate_delta") {
+            state.candidateText += String(data.delta || "");
+            state.currentActivity = { label: message("drafting"), detail: `Round ${state.currentRound + 1}` };
+            setStatus(state, "drafting");
+            renderActivity(state);
+        } else if (data.phase === "tool_call_start") {
+            state.roundHasToolCall = true;
+            const detail = data.path ? `${data.tool} · ${data.path}` : data.tool;
+            state.currentActivity = { label: message("toolRunning"), detail };
+            appendActivity(state, { type: "tool", text: `${message("toolRunning")} ${detail}` });
+            setStatus(state, "tool_running");
+        } else if (data.phase === "tool_call_end") {
+            const detail = data.path ? `${data.tool} · ${data.path}` : data.tool;
+            appendActivity(state, { type: "tool", text: `${detail} · ${data.status || "success"}` });
+            renderActivity(state);
+        } else if (data.phase === "round_end") {
+            const hasTools = Boolean(data.has_tool_calls);
+            state.roundHasToolCall = hasTools;
+            if (hasTools) {
+                state.candidateText = "";
+                state.currentActivity = { label: message("toolRunning"), detail: `Round ${state.currentRound + 1} complete` };
+            } else {
+                state.answerText = state.candidateText;
+                state.receivedText = state.answerText;
+                state.finalText = state.answerText;
+                state.candidateText = "";
+                state.currentActivity = { label: message("generating"), detail: "" };
+                setStatus(state, state.answerText ? "promoting" : "generating");
+                if (state.answerText) {
+                    state.pendingUnits = splitTextUnits(state.answerText);
+                    state.displayedText = "";
+                    state.sourceEnded = false;
+                    startTyping(state);
+                }
+            }
+            renderActivity(state);
+            scheduleRender(state, true);
+        } else if (data.phase === "activity") {
             const activity = [
                 "loading_skill", "reading_skill", "reasoning", "generating",
             ].includes(data.activity) ? data.activity : null;
@@ -608,6 +753,10 @@ function receiveStreamEvent(event) {
                 setStatus(state, "displaying");
             }
             enqueueFinalText(state, data.text ?? state.receivedText);
+            state.answerText = String(data.text ?? state.receivedText);
+            state.candidateText = "";
+            state.currentActivity = null;
+            renderActivity(state);
         } else if (data.phase === "error") {
             state.sourceEnded = true;
             state.finalText = state.receivedText;
@@ -625,6 +774,7 @@ function refreshLocale() {
     for (const node of app.graph?._nodes || []) {
         const state = node?._ycyyApiResultPreview;
         if (!state) continue;
+        if (state.activityTitle) state.activityTitle.textContent = message("processTitle");
         setCopyState(state, state.copyButton.dataset.copyState || "idle");
         setStatus(state, state.statusKey, state.statusDetail);
         scheduleRender(state);

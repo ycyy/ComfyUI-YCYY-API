@@ -48,6 +48,7 @@ class _TextStreamSink:
         self.client_id = getattr(server, "client_id", None)
         self.seq = 0
         self.last_activity = None
+        self.current_round = 0
 
     def _send(self, phase, **extra):
         PromptServer.instance.send_sync(
@@ -71,10 +72,45 @@ class _TextStreamSink:
         if value:
             self._send("delta", delta=value)
 
-    def activity(self, kind):
-        if kind and kind != self.last_activity:
-            self.last_activity = kind
-            self._send("activity", activity=kind)
+    def activity(self, kind, detail=None):
+        marker = (kind, detail or "")
+        if kind and marker != self.last_activity:
+            self.last_activity = marker
+            extra = {"activity": kind}
+            if detail:
+                extra["detail"] = detail
+            self._send("activity", **extra)
+
+    def round_start(self, round_index, tools_enabled=True):
+        self.current_round = int(round_index)
+        self._send("round_start", round=int(round_index), tools_enabled=bool(tools_enabled))
+
+    def candidate_delta(self, value, round_index=None):
+        if value:
+            extra = {"delta": value}
+            extra["round"] = int(self.current_round if round_index is None else round_index)
+            self._send("candidate_delta", **extra)
+
+    def tool_call_start(self, call_id, name, path=None, round_index=None):
+        extra = {"call_id": call_id, "tool": name}
+        if path:
+            extra["path"] = path
+        extra["round"] = int(self.current_round if round_index is None else round_index)
+        self._send("tool_call_start", **extra)
+
+    def tool_call_end(self, call_id, name, status="success", path=None, round_index=None):
+        extra = {"call_id": call_id, "tool": name, "status": status}
+        if path:
+            extra["path"] = path
+        extra["round"] = int(self.current_round if round_index is None else round_index)
+        self._send("tool_call_end", **extra)
+
+    def round_end(self, round_index, has_tool_calls):
+        self._send(
+            "round_end",
+            round=int(round_index),
+            has_tool_calls=bool(has_tool_calls),
+        )
 
     def end(self, value):
         self._send("end", text=value)
@@ -147,7 +183,7 @@ class OpenAITextAPI(io.ComfyNode):
                 io.Boolean.Input(id="clear_history", default=False),
                 io.Boolean.Input(
                     id="stream",
-                    default=False,
+                    default=True,
                     tooltip=(
                         "If true, the model response is streamed to the client as it is "
                         "generated using server-sent events (SSE)."
@@ -357,8 +393,12 @@ class OpenAITextAPI(io.ComfyNode):
                         persist_context=persist_context,
                         stream=stream_enabled,
                         post_stream=post_openai_sse_events,
-                        on_delta=sink.delta if sink is not None else None,
+                        on_delta=sink.candidate_delta if sink is not None else None,
                         on_activity=sink.activity if sink is not None else None,
+                        on_round_start=sink.round_start if sink is not None else None,
+                        on_round_end=sink.round_end if sink is not None else None,
+                        on_tool_call_start=sink.tool_call_start if sink is not None else None,
+                        on_tool_call_end=sink.tool_call_end if sink is not None else None,
                     )
                 except Exception as exc:
                     if sink is not None:

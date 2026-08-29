@@ -406,6 +406,7 @@ def load_skill(snapshot):
 
 LOAD_SKILL_TOOL = "load_skill"
 READ_SKILL_FILE_TOOL = "read_skill_file"
+READ_TOOL = "read"
 INVOCATION_POLICY = "required_once_per_session"
 EXECUTION_MODE = "pi_skill_agent"
 
@@ -478,14 +479,30 @@ def _function_definition(name):
                 "additionalProperties": False,
             },
         }
+    if name == READ_TOOL:
+        definition = _function_definition(READ_SKILL_FILE_TOOL)
+        definition["name"] = READ_TOOL
+        definition["description"] = (
+            "Read a text resource from the loaded Skill manifest. "
+            "Use offset (1-based line) and limit for large files."
+        )
+        definition["parameters"]["properties"].update({
+            "offset": {
+                "type": "integer", "minimum": 1,
+                "description": "1-based line number to start reading from.",
+            },
+            "limit": {
+                "type": "integer", "minimum": 1, "maximum": 2000,
+                "description": "Maximum number of lines to return.",
+            },
+        })
+        return definition
     raise ValueError(f"Unknown Skill tool definition: {name}")
 
 
-def skill_tool_definitions(protocol="openai-completions", loaded=False):
+def skill_tool_definitions(protocol="openai-completions", loaded=False, read_tool=READ_SKILL_FILE_TOOL):
     """Return the provider schema for the only tool registered in this phase."""
-    definition = _function_definition(
-        READ_SKILL_FILE_TOOL if loaded else LOAD_SKILL_TOOL
-    )
+    definition = _function_definition((read_tool if loaded else LOAD_SKILL_TOOL))
     if protocol == "openai-completions":
         return [{"type": "function", "function": definition}]
     if protocol == "openai-responses":
@@ -692,26 +709,42 @@ class ReadOnlySkillRuntime:
             self.loaded = True
             return output
 
-        if name != READ_SKILL_FILE_TOOL:
+        if name not in {READ_SKILL_FILE_TOOL, READ_TOOL}:
             raise SkillExecutionError(
                 "pi_skill_tool_call_invalid", f"Unknown Skill tool: {name}"
             )
         if not self.loaded:
             raise SkillExecutionError(
-                "skill_not_loaded", "read_skill_file requires load_skill first"
+                "skill_not_loaded", "read requires load_skill first"
             )
-        if set(arguments) != {"path"} or not isinstance(arguments.get("path"), str):
+        allowed = {"path"} if name == READ_SKILL_FILE_TOOL else {"path", "offset", "limit"}
+        if not set(arguments).issubset(allowed) or "path" not in arguments or not isinstance(arguments.get("path"), str):
             raise SkillExecutionError(
                 "pi_skill_tool_call_invalid",
-                "read_skill_file requires only the string 'path' argument",
+                f"{name} requires a string 'path' argument",
             )
+        if name == READ_TOOL:
+            for key in ("offset", "limit"):
+                if key in arguments and (
+                    isinstance(arguments[key], bool)
+                    or not isinstance(arguments[key], int)
+                    or arguments[key] < 1
+                ):
+                    raise SkillExecutionError(
+                        "pi_skill_tool_call_invalid", f"{key} must be a positive integer"
+                    )
+            if arguments.get("limit", 2000) > 2000:
+                raise SkillExecutionError(
+                    "pi_skill_tool_call_invalid", "limit must not exceed 2000"
+                )
         path = arguments["path"]
         if path == "SKILL.md":
             raise SkillExecutionError(
                 "pi_skill_tool_call_invalid", "SKILL.md can only be loaded with load_skill"
             )
-        if path in self.cache:
-            return self.cache[path]
+        cache_key = path if name == READ_SKILL_FILE_TOOL else (path, arguments.get("offset", 1), arguments.get("limit"))
+        if cache_key in self.cache:
+            return self.cache[cache_key]
         try:
             result = read_skill_reference(self.snapshot, path)
         except ValueError as exc:
@@ -720,8 +753,25 @@ class ReadOnlySkillRuntime:
             raise SkillExecutionError(
                 "pi_skill_tool_call_invalid", f"Resource is not in the manifest: {path}"
             )
+        if name == READ_TOOL:
+            lines = result.get("content", "").splitlines(keepends=True)
+            offset = arguments.get("offset", 1)
+            limit = arguments.get("limit", 2000)
+            start = offset - 1
+            if start >= len(lines) and lines:
+                raise SkillExecutionError(
+                    "pi_skill_tool_call_invalid", f"offset {offset} is beyond end of file"
+                )
+            selected = lines[start : start + limit]
+            result = dict(result)
+            result["content"] = "".join(selected)
+            result["offset"] = offset
+            result["line_count"] = len(selected)
+            result["total_lines"] = len(lines)
+            if start + len(selected) < len(lines):
+                result["next_offset"] = start + len(selected) + 1
         self._account(result)
-        self.cache[path] = result
+        self.cache[cache_key] = result
         return result
 
 
@@ -1103,7 +1153,7 @@ class SkillToolRegistry:
 
     @staticmethod
     def allowed_name(loaded):
-        return READ_SKILL_FILE_TOOL if loaded else LOAD_SKILL_TOOL
+        return READ_TOOL if loaded else LOAD_SKILL_TOOL
 
     @classmethod
     def validate(cls, call, loaded, seen):
@@ -1113,10 +1163,12 @@ class SkillToolRegistry:
             raise SkillExecutionError(
                 "pi_skill_tool_call_invalid", "Tool call_id is missing or duplicated"
             )
-        if name != cls.allowed_name(loaded):
+        allowed = cls.allowed_name(loaded)
+        aliases = {READ_TOOL, READ_SKILL_FILE_TOOL} if loaded else {LOAD_SKILL_TOOL}
+        if name not in aliases:
             raise SkillExecutionError(
                 "pi_skill_tool_call_invalid",
-                f"Tool is not registered in the current phase: {name!r}",
+                    f"Tool is not registered in the current phase: {name!r}",
             )
         return call_id, name, _parse_args(call.get("arguments"))
 
@@ -1130,7 +1182,11 @@ class PiSkillAgentLoop:
         self.session = session
         self.limits = limits
 
-    def run(self, payload, trace, stream=False, on_delta=None, on_activity=None):
+    def run(
+        self, payload, trace, stream=False, on_delta=None, on_activity=None,
+        on_round_start=None, on_round_end=None, on_tool_call_start=None,
+        on_tool_call_end=None,
+    ):
         field = self.adapter.history_field
         history = deepcopy(payload[field])
         base_payload = {
@@ -1147,14 +1203,29 @@ class PiSkillAgentLoop:
         trace["tool_choice_mode"] = "provider_default"
         seen = set()
 
+        final_candidate = []
         for round_index in range(self.limits["max_tool_rounds"] + 1):
-            tools = skill_tool_definitions(self.adapter.protocol, loaded=loaded)
+            tools = skill_tool_definitions(
+                self.adapter.protocol,
+                loaded=loaded,
+                read_tool=READ_TOOL if stream else READ_SKILL_FILE_TOOL,
+            )
+            if on_round_start is not None:
+                on_round_start(round_index, bool(tools))
+            candidate = []
+
+            def collect_candidate(value, *_ignored):
+                candidate.append(value)
+                if on_delta is not None:
+                    on_delta(value)
+
             data = self.adapter.request(
                 base_payload,
                 history,
                 tools,
                 stream=stream,
                 on_activity=on_activity,
+                on_delta=collect_candidate if stream else None,
             )
             normalized = self.adapter.normalize(data)
             self.session.append(
@@ -1177,47 +1248,22 @@ class PiSkillAgentLoop:
                         "pi_skill_response_invalid",
                         "Provider response contains no final text",
                     )
+                self.adapter.append_native_items(history, normalized)
+                if stream and on_round_end is not None:
+                    on_round_end(round_index, False)
                 if stream:
-                    # A tools-enabled response cannot be known to be the formal
-                    # answer until its stream has ended.  Keep that candidate
-                    # out of history and use a tools-free final phase so the UI
-                    # can safely display its first text delta immediately.
-                    if on_activity is not None:
-                        on_activity("generating")
-                    self.session.append(
-                        "final_phase_started", protocol=self.adapter.protocol
-                    )
-                    final_data = self.adapter.final_request(
-                        base_payload,
-                        history,
-                        stream=True,
-                        on_delta=on_delta,
-                        on_activity=on_activity,
-                    )
-                    final_normalized = self.adapter.normalize(final_data)
-                    if final_normalized.tool_calls:
-                        raise SkillExecutionError(
-                            "pi_skill_response_invalid",
-                            "Provider returned a tool call after Skill tools were removed",
-                        )
-                    if final_normalized.final_text is None:
-                        raise SkillExecutionError(
-                            "pi_skill_response_invalid",
-                            "Provider final phase contains no formal text",
-                        )
-                    self.adapter.append_native_items(history, final_normalized)
-                    normalized = final_normalized
-                else:
-                    self.adapter.append_native_items(history, normalized)
+                    final_candidate = candidate
                 trace["skill_loaded"] = True
                 if trace["load_source"] == "none":
                     trace["load_source"] = "tool_call"
                 self.session.commit(
                     history, self.snapshot, self.adapter.protocol
                 )
-                return normalized.final_text
+                return "".join(final_candidate) or normalized.final_text
 
             self.adapter.append_native_items(history, normalized)
+            if stream and on_round_end is not None:
+                on_round_end(round_index, True)
             if round_index >= self.limits["max_tool_rounds"]:
                 raise SkillExecutionError(
                     "pi_skill_tool_limit_exceeded", "Skill tool round limit exceeded"
@@ -1239,6 +1285,10 @@ class PiSkillAgentLoop:
                         accepted=False,
                         error={"code": exc.code, "message": exc.message},
                     )
+                    if on_tool_call_end is not None:
+                        on_tool_call_end(
+                            call_id, name, "error", arguments.get("path"), round_index
+                        )
                     raise
                 seen.add(call_id)
                 planned.append((call_id, name, arguments))
@@ -1261,6 +1311,10 @@ class PiSkillAgentLoop:
                     on_activity(
                         "loading_skill" if name == LOAD_SKILL_TOOL else "reading_skill"
                     )
+                if on_tool_call_start is not None:
+                    on_tool_call_start(
+                        call_id, name, arguments.get("path"), round_index
+                    )
                 try:
                     output = runtime.execute(name, arguments)
                 except SkillExecutionError as exc:
@@ -1274,6 +1328,10 @@ class PiSkillAgentLoop:
                     "tool_call_settled", call_id=call_id, name=name,
                     outcome="success", path=output.get("path"), output=output,
                 )
+                if on_tool_call_end is not None:
+                    on_tool_call_end(
+                        call_id, name, "success", output.get("path"), round_index
+                    )
                 wire_result = self.adapter.serialize_tool_result(call_id, output)
                 history.append(wire_result)
                 self.session.append(
@@ -1381,6 +1439,8 @@ class SkillExecutionRouter:
         protocol, post_json, endpoint, headers, timeout, proxies, payload,
         snapshot, session_key, persist_context=True, trace=None,
         stream=False, post_stream=None, on_delta=None, on_activity=None,
+        on_round_start=None, on_round_end=None, on_tool_call_start=None,
+        on_tool_call_end=None,
     ):
         config = get_skill_config()
         if not config.get("allow_call", False):
@@ -1447,6 +1507,10 @@ class SkillExecutionRouter:
                     stream=stream,
                     on_delta=on_delta,
                     on_activity=on_activity,
+                    on_round_start=on_round_start,
+                    on_round_end=on_round_end,
+                    on_tool_call_start=on_tool_call_start,
+                    on_tool_call_end=on_tool_call_end,
                 )
                 return result, active_trace, session.conversation(snapshot)
             except Exception as exc:
@@ -1504,7 +1568,8 @@ class SkillRequestContext:
     def execute(
         self, post_json, endpoint, headers, timeout, proxies, payload,
         session_key, persist_context=True, stream=False, post_stream=None,
-        on_delta=None, on_activity=None,
+        on_delta=None, on_activity=None, on_round_start=None, on_round_end=None,
+        on_tool_call_start=None, on_tool_call_end=None,
     ):
         if not self.enabled:
             raise RuntimeError("Skill execution requires selected skill_options")
@@ -1525,6 +1590,10 @@ class SkillRequestContext:
                 post_stream=post_stream,
                 on_delta=on_delta,
                 on_activity=on_activity,
+                on_round_start=on_round_start,
+                on_round_end=on_round_end,
+                on_tool_call_start=on_tool_call_start,
+                on_tool_call_end=on_tool_call_end,
             )
             return result, conversation
         except Exception as exc:
