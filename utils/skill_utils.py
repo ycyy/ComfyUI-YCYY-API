@@ -780,6 +780,11 @@ class NormalizedResponse:
     native_items: list[dict]
     tool_calls: list[dict]
     final_text: str | None
+    # Provider-neutral terminal state.  ``tool_use`` is inferred when a
+    # response contains tool calls; ``stop`` means a normal final answer.
+    stop_reason: str | None = None
+    terminal: bool = True
+    incomplete_reason: str | None = None
 
 
 class ProviderAdapter:
@@ -876,10 +881,10 @@ class ResponsesProviderAdapter(ProviderAdapter):
         def consume(event):
             nonlocal completed_response, completed
             event_type = event.get("type")
-            if event_type in {"error", "response.failed", "response.incomplete"}:
+            if event_type in {"error", "response.failed"}:
                 detail = event.get("error") or event.get("response") or event
                 raise ValueError(f"Streaming API failed: {detail}")
-            if event_type == "response.completed":
+            if event_type in {"response.completed", "response.incomplete"}:
                 completed_response = event.get("response")
                 completed = True
                 return
@@ -988,8 +993,25 @@ class ResponsesProviderAdapter(ProviderAdapter):
                         and block.get("text")
                     ):
                         chunks.append(block["text"])
+        status = data.get("status")
+        incomplete_reason = None
+        if isinstance(data.get("incomplete_details"), dict):
+            incomplete_reason = data["incomplete_details"].get("reason")
+        if status == "incomplete":
+            stop_reason = "length" if incomplete_reason == "max_output_tokens" else "incomplete"
+        elif status in {"failed", "cancelled"}:
+            stop_reason = "error"
+        elif calls:
+            stop_reason = "tool_use"
+        elif status == "completed":
+            stop_reason = "stop"
+        else:
+            stop_reason = status
         return NormalizedResponse(
-            output, calls, "\n".join(chunks) if chunks else None
+            output, calls, "\n".join(chunks) if chunks else None,
+            stop_reason=stop_reason,
+            terminal=status in {"completed", "incomplete", "failed", "cancelled"},
+            incomplete_reason=incomplete_reason,
         )
 
     def append_native_items(self, history, normalized):
@@ -1135,7 +1157,22 @@ class CompletionsProviderAdapter(ProviderAdapter):
             })
         content = message.get("content")
         final_text = content if isinstance(content, str) and content.strip() else None
-        return NormalizedResponse([deepcopy(message)], calls, final_text)
+        finish_reason = choices[0].get("finish_reason") if isinstance(choices[0], dict) else None
+        if finish_reason == "length":
+            stop_reason = "length"
+        elif finish_reason in {"content_filter", "error"}:
+            stop_reason = "error"
+        elif calls or finish_reason in {"tool_calls", "function_call"}:
+            stop_reason = "tool_use"
+        elif finish_reason in {None, "stop"}:
+            stop_reason = "stop"
+        else:
+            stop_reason = str(finish_reason)
+        return NormalizedResponse(
+            [deepcopy(message)], calls, final_text,
+            stop_reason=stop_reason,
+            terminal=finish_reason is not None or bool(final_text or calls),
+        )
 
     def append_native_items(self, history, normalized):
         history.extend(deepcopy(normalized.native_items))
@@ -1237,11 +1274,37 @@ class PiSkillAgentLoop:
                 final_text_present=normalized.final_text is not None,
             )
 
+            # Never execute a tool call whose arguments/response were cut off
+            # or failed at the provider level.  This mirrors pi's safeguard
+            # against running truncated tool arguments.
+            if normalized.stop_reason == "length" and normalized.tool_calls:
+                raise SkillExecutionError(
+                    "pi_skill_response_truncated",
+                    "Provider response was truncated before Skill tool arguments completed",
+                )
+            if normalized.stop_reason in {"error", "incomplete"} and normalized.tool_calls:
+                detail = normalized.incomplete_reason or normalized.stop_reason
+                raise SkillExecutionError(
+                    "pi_skill_response_incomplete",
+                    f"Provider response did not complete: {detail}",
+                )
+
             if not normalized.tool_calls:
                 if not loaded:
                     raise SkillExecutionError(
                         "skill_not_loaded",
                         "The model returned final output before calling load_skill",
+                    )
+                if normalized.stop_reason == "length":
+                    raise SkillExecutionError(
+                        "pi_skill_response_truncated",
+                        "Provider response was truncated before a complete final answer",
+                    )
+                if normalized.stop_reason in {"error", "incomplete"}:
+                    detail = normalized.incomplete_reason or normalized.stop_reason
+                    raise SkillExecutionError(
+                        "pi_skill_response_incomplete",
+                        f"Provider response did not complete: {detail}",
                     )
                 if normalized.final_text is None:
                     raise SkillExecutionError(

@@ -759,6 +759,9 @@ function receiveStreamEvent(event) {
                 setStatus(state, "displaying");
             }
             enqueueFinalText(state, data.text ?? state.receivedText);
+            if (data.stop_reason && data.stop_reason !== "stop") {
+                state.terminalError = `stop_reason: ${data.stop_reason}`;
+            }
             state.candidateText = "";
             state.currentActivity = null;
             renderActivity(state);

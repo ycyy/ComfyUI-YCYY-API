@@ -110,13 +110,14 @@ class _TextStreamSink:
             "round_end",
             round=int(round_index),
             has_tool_calls=bool(has_tool_calls),
+            text_status="candidate" if has_tool_calls else "final",
         )
 
     def end(self, value):
-        self._send("end", text=value)
+        self._send("end", text=value, stop_reason="stop", text_status="final")
 
     def error(self, exc):
-        self._send("error", message=_safe_stream_error(exc))
+        self._send("error", message=_safe_stream_error(exc), stop_reason="error", text_status="error")
 
 
 @PromptServer.instance.routes.get("/ycyy/openai/apis/all")

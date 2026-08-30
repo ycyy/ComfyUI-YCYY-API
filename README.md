@@ -33,13 +33,15 @@ The ModelScope image generation interface only requires you to fill in the corre
 
 The node supports text, image, and video inputs. Video is sent directly using the current protocol's content format; if the target API or protocol does not support video, its error is surfaced as an explicit video-unsupported message. File input is not implemented in this version. The `OpenAI Text Advanced Options` node accepts a JSON object for protocol/API-specific parameters, for example `{"temperature":0.7,"max_output_tokens":4096}`. JSON options cannot override request fields such as `model`, `messages`, `input`, `instructions`, `stream`, `api_key`, `base_url`, or `timeout`.
 
-When `stream` is enabled, the model response is streamed to the client as it is generated using server-sent events (SSE). Streaming and `skill_options` cannot currently be enabled together.
+When `stream` is enabled, the model response is streamed to the client as it is generated using server-sent events (SSE). This also works with `skill_options`. In Skill mode, text from rounds that request a tool is treated as a candidate and is discarded after the tool call; only the first round that completes without tool calls is promoted to the final answer. The final `end` event is authoritative and reconciles any difference between streamed deltas and the returned node text. Terminal states distinguish normal completion, truncation, and errors.
 
 ### skills
 
 The `OpenAI Text Skill Options` node discovers local skills organized around `SKILL.md`. Select a Skill and connect the node to `OpenAI Text API` through `skill_options`. Configure Skill locations with `skills.paths`; relative paths resolve from this plugin directory, and the default location is `skills/`. Set `skills.allow_call` to `true` to enable Skill calls.
 
 When a Skill is selected, the model follows its instructions and reads bundled text resources as needed. Script files can be read as text but are never executed. Skill mode cannot run commands, edit or write files, or independently access the network. The target model service must support tool calls.
+
+Skill streaming is deliberately conservative: candidate text is buffered per model round, tool-call rounds are cleared, and final text is displayed only after a no-tool round completes. This avoids showing an intermediate answer that the model later revises after reading a Skill resource.
 
 ## Advanced usage instructions
 
