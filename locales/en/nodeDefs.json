@@ -3,44 +3,101 @@
         "display_name": "OpenAI Text API",
         "description": "OpenAI and OpenAI-compatible text, image and video API.",
         "inputs": {
-            "api_name": {"name": "api_name"},
-            "model": {"name": "model"},
-            "system_prompt": {"name": "system_prompt"},
-            "user_prompt": {"name": "user_prompt"},
-            "persist_context": {"name": "persist_context", "tooltip": "Persist chat context between calls"},
-            "clear_history": {"name": "clear_history", "tooltip": "Clear the current conversation history"},
-            "stream": {"name": "stream", "tooltip": "If true, the model response is streamed to the client as it is generated using server-sent events (SSE)."},
-            "images": {"name": "images", "tooltip": "Optional image input"},
-            "videos": {"name": "videos", "tooltip": "Optional video input; unsupported APIs return an error"},
-            "config_options": {"name": "config_options", "tooltip": "Configuration override"},
-            "proxy_options": {"name": "proxy_options", "tooltip": "Proxy override"},
-            "advanced_options": {"name": "advanced_options", "tooltip": "Advanced model options"},
-            "skill_options": {"name": "skill_options", "tooltip": "Optional progressive Skill configuration from OpenAI Text Skill Options"}
+            "api_name": {
+                "name": "api_name"
+            },
+            "model": {
+                "name": "model"
+            },
+            "system_prompt": {
+                "name": "system_prompt"
+            },
+            "user_prompt": {
+                "name": "user_prompt"
+            },
+            "persist_context": {
+                "name": "persist_context",
+                "tooltip": "Persist chat context between calls"
+            },
+            "clear_history": {
+                "name": "clear_history",
+                "tooltip": "Clear the current conversation history"
+            },
+            "stream": {
+                "name": "stream",
+                "tooltip": "If true, the model response is streamed to the client as it is generated using server-sent events (SSE)."
+            },
+            "images": {
+                "name": "images",
+                "tooltip": "Optional image input"
+            },
+            "videos": {
+                "name": "videos",
+                "tooltip": "Optional video input; unsupported APIs return an error"
+            },
+            "config_options": {
+                "name": "config_options",
+                "tooltip": "Configuration override"
+            },
+            "proxy_options": {
+                "name": "proxy_options",
+                "tooltip": "Proxy override"
+            },
+            "advanced_options": {
+                "name": "advanced_options",
+                "tooltip": "Advanced model options"
+            },
+            "skill_options": {
+                "name": "skill_options",
+                "tooltip": "Optional progressive Skill configuration from OpenAI Text Skill Options"
+            }
         },
         "outputs": {
-            "0": {"name": "Result"},
-            "1": {"name": "Conversation", "tooltip": "Full redacted Pi Skill Agent ledger for Skill calls"},
-            "2": {"name": "Skill Trace"}
+            "0": {
+                "name": "Result"
+            },
+            "1": {
+                "name": "Conversation",
+                "tooltip": "Full redacted Pi Skill Agent ledger for Skill calls"
+            },
+            "2": {
+                "name": "Skill Trace"
+            }
         }
     },
     "YCYY_Preview_API_Result": {
         "display_name": "Preview API Result",
         "description": "Render text as a Markdown preview with copy support.",
         "inputs": {
-            "source": {"name": "source", "tooltip": "Markdown or plain text to preview"}
+            "source": {
+                "name": "source",
+                "tooltip": "Markdown or plain text to preview"
+            }
         },
         "outputs": {
-            "0": {"name": "text"}
+            "0": {
+                "name": "text"
+            }
         }
     },
     "YCYY_OpenAI_Text_Skill_Options": {
         "display_name": "OpenAI Text Skill Options",
         "description": "Load a local SKILL.md package for progressive use by OpenAI Text API.",
         "inputs": {
-            "skill_name": {"name": "skill_name", "tooltip": "Select a configured local Skill"},
-            "description": {"name": "Skill description", "tooltip": "Read-only description of the selected Skill"}
+            "skill_name": {
+                "name": "skill_name",
+                "tooltip": "Select a configured local Skill"
+            },
+            "description": {
+                "name": "Skill description",
+                "tooltip": "Read-only description of the selected Skill"
+            }
         },
-        "outputs": {"0": {"name": "skill_options"}}
+        "outputs": {
+            "0": {
+                "name": "skill_options"
+            }
+        }
     },
     "YCYY_OpenAI_Text_Advanced_Options": {
         "display_name": "OpenAI Text Advanced Options",
@@ -51,7 +108,11 @@
                 "tooltip": "A JSON object containing protocol/API-specific request parameters. Example:\n{\n  \"temperature\": 0.7,\n  \"reasoning\": {\n    \"effort\": \"medium\"\n  }\n}"
             }
         },
-        "outputs": {"0": {"name": "advanced_options"}}
+        "outputs": {
+            "0": {
+                "name": "advanced_options"
+            }
+        }
     },
     "YCYY_Gemini_Image_API": {
         "display_name": "Gemini Image API",
@@ -97,6 +158,60 @@
             },
             "1": {
                 "name": "String"
+            }
+        }
+    },
+    "YCYY_Grok_Image_API": {
+        "display_name": "Grok Image API",
+        "description": "This node uses the xAI Grok Image API to generate or edit images.",
+        "inputs": {
+            "images": {
+                "name": "images",
+                "tooltip": "Optional reference image(s) for editing. Up to 3 images (1 for pro model)."
+            },
+            "config_options": {
+                "name": "config_options",
+                "tooltip": "Optional configuration override from YCYY API Config Options"
+            },
+            "proxy_options": {
+                "name": "proxy_options",
+                "tooltip": "Optional proxy configuration override from YCYY API Proxy Options"
+            },
+            "prompt": {
+                "name": "prompt",
+                "tooltip": "The prompt used to generate or edit the image"
+            },
+            "model": {
+                "name": "model",
+                "tooltip": "Grok image model"
+            },
+            "aspect_ratio": {
+                "name": "aspect_ratio",
+                "tooltip": "Aspect ratio of the generated image. 'auto' matches input image in edit mode or generates 1:1."
+            },
+            "resolution": {
+                "name": "resolution",
+                "tooltip": "Resolution of the output image (1K or 2K)."
+            },
+            "quality": {
+                "name": "quality",
+                "tooltip": "Quality level, supported only by the grok-imagine-image-2.0 model."
+            },
+            "number_of_images": {
+                "name": "number_of_images",
+                "tooltip": "Number of images to generate (1 to 10)."
+            },
+            "seed": {
+                "name": "seed",
+                "tooltip": "Seed to use for generation."
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "Image"
+            },
+            "1": {
+                "name": "Info"
             }
         }
     },
@@ -475,20 +590,49 @@
         "display_name": "ModelScope Image Edit API",
         "description": "This node uses the ModelScope API to edit an input image.",
         "inputs": {
-            "image": {"name": "image", "tooltip": "Input image to edit"},
-            "config_options": {"name": "config_options", "tooltip": "Optional configuration override from YCYY API Config Options"},
-            "proxy_options": {"name": "proxy_options", "tooltip": "Optional proxy configuration override from YCYY API Proxy Options"},
-            "prompt": {"name": "prompt", "tooltip": "Image editing instruction"},
-            "negative_prompt": {"name": "negative_prompt", "tooltip": "Negative prompt"},
-            "model": {"name": "model"},
-            "width": {"name": "width"},
-            "height": {"name": "height"},
-            "steps": {"name": "steps"},
-            "guidance": {"name": "guidance"}
+            "image": {
+                "name": "image",
+                "tooltip": "Input image to edit"
+            },
+            "config_options": {
+                "name": "config_options",
+                "tooltip": "Optional configuration override from YCYY API Config Options"
+            },
+            "proxy_options": {
+                "name": "proxy_options",
+                "tooltip": "Optional proxy configuration override from YCYY API Proxy Options"
+            },
+            "prompt": {
+                "name": "prompt",
+                "tooltip": "Image editing instruction"
+            },
+            "negative_prompt": {
+                "name": "negative_prompt",
+                "tooltip": "Negative prompt"
+            },
+            "model": {
+                "name": "model"
+            },
+            "width": {
+                "name": "width"
+            },
+            "height": {
+                "name": "height"
+            },
+            "steps": {
+                "name": "steps"
+            },
+            "guidance": {
+                "name": "guidance"
+            }
         },
         "outputs": {
-            "0": {"name": "Image"},
-            "1": {"name": "String"}
+            "0": {
+                "name": "Image"
+            },
+            "1": {
+                "name": "String"
+            }
         }
     },
     "YCYY_Image_Compare": {

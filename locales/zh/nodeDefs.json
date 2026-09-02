@@ -3,44 +3,101 @@
         "display_name": "OpenAI 文本 API",
         "description": "支持 OpenAI 及兼容接口的文本、图像和视频请求。",
         "inputs": {
-            "api_name": {"name": "API 名称"},
-            "model": {"name": "模型"},
-            "system_prompt": {"name": "系统提示词"},
-            "user_prompt": {"name": "用户提示词"},
-            "persist_context": {"name": "保持上下文", "tooltip": "在多次调用之间保持对话上下文"},
-            "clear_history": {"name": "清除历史", "tooltip": "清除当前会话历史"},
-            "stream": {"name": "流式输出", "tooltip": "设为 true 时，模型响应会在生成过程中通过服务器发送事件（SSE）流式传输到客户端。"},
-            "images": {"name": "图像", "tooltip": "可选图像输入"},
-            "videos": {"name": "视频", "tooltip": "可选视频输入；不支持视频的接口会返回错误"},
-            "config_options": {"name": "配置选项", "tooltip": "配置覆盖"},
-            "proxy_options": {"name": "代理选项", "tooltip": "代理覆盖"},
-            "advanced_options": {"name": "高级选项", "tooltip": "模型高级参数"},
-            "skill_options": {"name": "Skill 选项", "tooltip": "来自 OpenAI 文本 Skill 选项节点的可选渐进式 Skill 配置"}
+            "api_name": {
+                "name": "API 名称"
+            },
+            "model": {
+                "name": "模型"
+            },
+            "system_prompt": {
+                "name": "系统提示词"
+            },
+            "user_prompt": {
+                "name": "用户提示词"
+            },
+            "persist_context": {
+                "name": "保持上下文",
+                "tooltip": "在多次调用之间保持对话上下文"
+            },
+            "clear_history": {
+                "name": "清除历史",
+                "tooltip": "清除当前会话历史"
+            },
+            "stream": {
+                "name": "流式输出",
+                "tooltip": "设为 true 时，模型响应会在生成过程中通过服务器发送事件（SSE）流式传输到客户端。"
+            },
+            "images": {
+                "name": "图像",
+                "tooltip": "可选图像输入"
+            },
+            "videos": {
+                "name": "视频",
+                "tooltip": "可选视频输入；不支持视频的接口会返回错误"
+            },
+            "config_options": {
+                "name": "配置选项",
+                "tooltip": "配置覆盖"
+            },
+            "proxy_options": {
+                "name": "代理选项",
+                "tooltip": "代理覆盖"
+            },
+            "advanced_options": {
+                "name": "高级选项",
+                "tooltip": "模型高级参数"
+            },
+            "skill_options": {
+                "name": "Skill 选项",
+                "tooltip": "来自 OpenAI 文本 Skill 选项节点的可选渐进式 Skill 配置"
+            }
         },
         "outputs": {
-            "0": {"name": "结果"},
-            "1": {"name": "对话", "tooltip": "Skill 调用时输出完整脱敏的 Pi Skill Agent ledger"},
-            "2": {"name": "Skill 调用记录"}
+            "0": {
+                "name": "结果"
+            },
+            "1": {
+                "name": "对话",
+                "tooltip": "Skill 调用时输出完整脱敏的 Pi Skill Agent ledger"
+            },
+            "2": {
+                "name": "Skill 调用记录"
+            }
         }
     },
     "YCYY_Preview_API_Result": {
         "display_name": "Preview API Result",
         "description": "将文本渲染为 Markdown 网页预览，并支持复制。",
         "inputs": {
-            "source": {"name": "文本", "tooltip": "要预览的 Markdown 或纯文本"}
+            "source": {
+                "name": "文本",
+                "tooltip": "要预览的 Markdown 或纯文本"
+            }
         },
         "outputs": {
-            "0": {"name": "文本"}
+            "0": {
+                "name": "文本"
+            }
         }
     },
     "YCYY_OpenAI_Text_Skill_Options": {
         "display_name": "OpenAI 文本 Skill 选项",
         "description": "加载本地 SKILL.md，并供 OpenAI 文本 API 渐进式读取引用资料。",
         "inputs": {
-            "skill_name": {"name": "Skill 名称", "tooltip": "选择配置中发现的本地 Skill"},
-            "description": {"name": "Skill 描述", "tooltip": "当前所选 Skill 的只读描述"}
+            "skill_name": {
+                "name": "Skill 名称",
+                "tooltip": "选择配置中发现的本地 Skill"
+            },
+            "description": {
+                "name": "Skill 描述",
+                "tooltip": "当前所选 Skill 的只读描述"
+            }
         },
-        "outputs": {"0": {"name": "Skill 选项"}}
+        "outputs": {
+            "0": {
+                "name": "Skill 选项"
+            }
+        }
     },
     "YCYY_OpenAI_Text_Advanced_Options": {
         "display_name": "OpenAI 文本高级选项（JSON）",
@@ -51,7 +108,11 @@
                 "tooltip": "填写协议或 API 特有请求参数的 JSON 对象。示例：\n{\n  \"temperature\": 0.7,\n  \"reasoning\": {\n    \"effort\": \"medium\"\n  }\n}"
             }
         },
-        "outputs": {"0": {"name": "高级选项"}}
+        "outputs": {
+            "0": {
+                "name": "高级选项"
+            }
+        }
     },
     "YCYY_Gemini_Image_API": {
         "display_name": "Gemini 图像 API",
@@ -61,11 +122,11 @@
                 "name": "图像",
                 "tooltip": "可选的图像，用作模型的上下文"
             },
-            "config_options":{
+            "config_options": {
                 "name": "配置选项",
                 "tooltip": "可选配置覆盖选项，来自 YCYY API 配置选项"
             },
-            "proxy_options":{
+            "proxy_options": {
                 "name": "代理选项",
                 "tooltip": "可选代理覆盖选项，来自 YCYY API 代理选项"
             },
@@ -101,19 +162,73 @@
             }
         }
     },
-    "YCYY_Ollama_VLM_API":{
-        "display_name": "Ollama 视觉 API",
-        "description": "这个节点使用Ollama VLM 模型进行图片推理分析",
+    "YCYY_Grok_Image_API": {
+        "display_name": "Grok 图像 API",
+        "description": "该节点使用 xAI Grok 图像 API 生成或编辑图像",
         "inputs": {
-            "images":{
+            "images": {
                 "name": "图像",
-                "tooltip": "用于分析的图像(支持多个)"
+                "tooltip": "可选的参考图像，用于图生图编辑。Grok 支持最多 3 张参考图片（pro 模型支持 1 张）。"
             },
-            "config_options":{
+            "config_options": {
                 "name": "配置选项",
                 "tooltip": "可选配置覆盖选项，来自 YCYY API 配置选项"
             },
-            "proxy_options":{
+            "proxy_options": {
+                "name": "代理选项",
+                "tooltip": "可选代理覆盖选项，来自 YCYY API 代理选项"
+            },
+            "prompt": {
+                "name": "提示词",
+                "tooltip": "用于生成或编辑图像的提示词"
+            },
+            "model": {
+                "name": "模型",
+                "tooltip": "Grok 图像模型"
+            },
+            "aspect_ratio": {
+                "name": "图像宽高比",
+                "tooltip": "输出图像的宽高比。'auto' 在编辑模式下匹配输入图像，或生成 1:1 正方形。"
+            },
+            "resolution": {
+                "name": "图像分辨率",
+                "tooltip": "控制输出图像的分辨率（1K 或 2K）。"
+            },
+            "quality": {
+                "name": "质量",
+                "tooltip": "质量等级，仅 grok-imagine-image-2.0 模型支持。"
+            },
+            "number_of_images": {
+                "name": "生成数量",
+                "tooltip": "要生成的图像数量（1 到 10）。"
+            },
+            "seed": {
+                "name": "种子",
+                "tooltip": "用于生成噪声的随机种子。"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "图像"
+            },
+            "1": {
+                "name": "信息"
+            }
+        }
+    },
+    "YCYY_Ollama_VLM_API": {
+        "display_name": "Ollama 视觉 API",
+        "description": "这个节点使用Ollama VLM 模型进行图片推理分析",
+        "inputs": {
+            "images": {
+                "name": "图像",
+                "tooltip": "用于分析的图像(支持多个)"
+            },
+            "config_options": {
+                "name": "配置选项",
+                "tooltip": "可选配置覆盖选项，来自 YCYY API 配置选项"
+            },
+            "proxy_options": {
                 "name": "代理选项",
                 "tooltip": "可选代理覆盖选项，来自 YCYY API 代理选项"
             },
@@ -127,26 +242,26 @@
             }
         }
     },
-   "YCYY_Ollama_LLM_API":{
+    "YCYY_Ollama_LLM_API": {
         "display_name": "Ollama 文本 API",
         "description": "该节点使用 Ollama 大语言模型进行对话",
         "inputs": {
-            "config_options":{
+            "config_options": {
                 "name": "配置选项",
                 "tooltip": "可选配置覆盖选项，来自 YCYY API 配置选项"
             },
-            "proxy_options":{
+            "proxy_options": {
                 "name": "代理选项",
                 "tooltip": "可选代理覆盖选项，来自 YCYY API 代理选项"
             },
-            "advanced_options":{
+            "advanced_options": {
                 "name": "高级选项",
                 "tooltip": "模型的高级选项（可选）,接受来自 Ollama 文本高级选项节点的输入。"
             },
-            "system_prompt":{
+            "system_prompt": {
                 "name": "system_prompt"
             },
-            "user_prompt":{
+            "user_prompt": {
                 "name": "user_prompt"
             },
             "model": {
@@ -172,17 +287,17 @@
             }
         }
     },
-    "YCYY_Ollama_LLM_Advanced_Options":{
+    "YCYY_Ollama_LLM_Advanced_Options": {
         "display_name": "Ollama 文本高级选项",
         "description": "该节点为 ollama 大语言模型提供了高级选项。",
-        "inputs": {           
-            "max_tokens":{
+        "inputs": {
+            "max_tokens": {
                 "name": "max_tokens"
             },
-            "temperature":{
+            "temperature": {
                 "name": "temperature"
             },
-            "top_p":{
+            "top_p": {
                 "name": "top_p"
             },
             "enable_max_tokens": {
@@ -261,19 +376,19 @@
             }
         }
     },
-    "YCYY_Gemini_Image_Preset":{
+    "YCYY_Gemini_Image_Preset": {
         "display_name": "Gemini 图像预设",
         "description": "该节点为 Gemini 图像 API 提供预设值",
         "inputs": {
-            "preset":{
+            "preset": {
                 "name": "预设名称",
                 "tooltip": "预设名称"
             },
-            "description":{
+            "description": {
                 "name": "预设描述",
                 "tooltip": "预设描述"
             },
-            "prompt":{
+            "prompt": {
                 "name": "预设提示词",
                 "tooltip": "预设提示词"
             }
@@ -332,11 +447,11 @@
                 "name": "text",
                 "tooltip": "需要转换为语音的文本"
             },
-            "config_options":{
+            "config_options": {
                 "name": "配置选项",
                 "tooltip": "可选配置覆盖选项，来自 YCYY API 配置选项"
             },
-            "proxy_options":{
+            "proxy_options": {
                 "name": "代理选项",
                 "tooltip": "可选代理覆盖选项，来自 YCYY API 代理选项"
             },
@@ -406,11 +521,11 @@
                 "name": "prompt",
                 "tooltip": "用于指导转录的提示词。您可以要求特定的格式或指令。"
             },
-            "config_options":{
+            "config_options": {
                 "name": "配置选项",
                 "tooltip": "可选配置覆盖选项，来自 YCYY API 配置选项"
             },
-            "proxy_options":{
+            "proxy_options": {
                 "name": "代理选项",
                 "tooltip": "可选代理覆盖选项，来自 YCYY API 代理选项"
             },
@@ -431,11 +546,11 @@
         "display_name": "魔搭图像API",
         "description": "该节点使用 ModelScope API 生成图像",
         "inputs": {
-            "config_options":{
+            "config_options": {
                 "name": "配置选项",
                 "tooltip": "可选配置覆盖选项，来自 YCYY API 配置选项"
             },
-            "proxy_options":{
+            "proxy_options": {
                 "name": "代理选项",
                 "tooltip": "可选代理覆盖选项，来自 YCYY API 代理选项"
             },
@@ -476,20 +591,49 @@
         "display_name": "魔搭图像编辑API",
         "description": "该节点使用 ModelScope API 编辑输入图像",
         "inputs": {
-            "image": {"name": "输入图像", "tooltip": "要编辑的输入图像"},
-            "config_options": {"name": "配置选项", "tooltip": "可选配置覆盖选项，来自 YCYY API 配置选项"},
-            "proxy_options": {"name": "代理选项", "tooltip": "可选代理覆盖选项，来自 YCYY API 代理选项"},
-            "prompt": {"name": "prompt", "tooltip": "图像编辑指令"},
-            "negative_prompt": {"name": "negative_prompt", "tooltip": "负向提示"},
-            "model": {"name": "模型"},
-            "width": {"name": "宽度"},
-            "height": {"name": "高度"},
-            "steps": {"name": "采样步数"},
-            "guidance": {"name": "提示词引导系数"}
+            "image": {
+                "name": "输入图像",
+                "tooltip": "要编辑的输入图像"
+            },
+            "config_options": {
+                "name": "配置选项",
+                "tooltip": "可选配置覆盖选项，来自 YCYY API 配置选项"
+            },
+            "proxy_options": {
+                "name": "代理选项",
+                "tooltip": "可选代理覆盖选项，来自 YCYY API 代理选项"
+            },
+            "prompt": {
+                "name": "prompt",
+                "tooltip": "图像编辑指令"
+            },
+            "negative_prompt": {
+                "name": "negative_prompt",
+                "tooltip": "负向提示"
+            },
+            "model": {
+                "name": "模型"
+            },
+            "width": {
+                "name": "宽度"
+            },
+            "height": {
+                "name": "高度"
+            },
+            "steps": {
+                "name": "采样步数"
+            },
+            "guidance": {
+                "name": "提示词引导系数"
+            }
         },
         "outputs": {
-            "0": {"name": "图像"},
-            "1": {"name": "字符串"}
+            "0": {
+                "name": "图像"
+            },
+            "1": {
+                "name": "字符串"
+            }
         }
     },
     "YCYY_Image_Compare": {

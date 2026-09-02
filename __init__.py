@@ -2,6 +2,7 @@ from comfy_api.latest import ComfyExtension, io
 from typing_extensions import override
 
 from .gemini.gemini_image_node import *
+from .grok.grok_image_node import *
 from .gemini.gemini_image_preset_node import *
 from .gemini.gemini_tts_node import *
 from .gemini.gemini_tts_multi_node import *
@@ -27,7 +28,8 @@ class APIExtension(ComfyExtension):
     @override
     async def get_node_list(self) -> list[type[io.ComfyNode]]:
         return [
-            GeminiImage,          
+            GeminiImage,
+            GrokImage,
             GeminiTTS,
             GeminiTTSMulti,
             GeminiSTT,

@@ -6,7 +6,10 @@
             "api_key": "put your key here",
             "timeout": 120,
             "api_protocol": "openai-completions",
-            "models": ["gpt-4o", "gpt-5"]
+            "models": [
+                "gpt-4o",
+                "gpt-5"
+            ]
         },
         {
             "api-name": "OpenAI Responses",
@@ -14,14 +17,29 @@
             "api_key": "put your key here",
             "timeout": 120,
             "api_protocol": "openai-responses",
-            "models": ["gpt-5"]
+            "models": [
+                "gpt-5"
+            ]
         }
     ],
     "skills": {
-        "paths": ["skills"],
+        "paths": [
+            "skills"
+        ],
         "allow_call": false
     },
-    "gemini-image":{
+    "grok-image": {
+        "base_url": "https://api.x.ai/v1",
+        "api_key": "put your key here",
+        "timeout": 120,
+        "models": [
+            "grok-imagine-image-2.0",
+            "grok-imagine-image-quality",
+            "grok-imagine-image-pro",
+            "grok-imagine-image"
+        ]
+    },
+    "gemini-image": {
         "base_url": "https://generativelanguage.googleapis.com/v1beta/models",
         "api_key": "put your key here",
         "timeout": 120,
@@ -31,7 +49,7 @@
             "gemini-3.1-flash-image-preview"
         ]
     },
-        "gemini-tts": {
+    "gemini-tts": {
         "base_url": "https://generativelanguage.googleapis.com/v1beta/models",
         "api_key": "put your key here",
         "timeout": 120,
@@ -96,7 +114,7 @@
             "FireRedTeam/FireRed-Image-Edit-1.1"
         ]
     },
-    "proxy":{
+    "proxy": {
         "enable": false,
         "http": "",
         "https": "http://127.0.0.1:7890"
