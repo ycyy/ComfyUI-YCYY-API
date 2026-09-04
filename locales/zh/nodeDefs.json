@@ -65,6 +65,72 @@
             }
         }
     },
+    "YCYY_OpenAI_Image_API": {
+        "display_name": "OpenAI 图像 API",
+        "description": "使用 OpenAI Image API 生成或编辑图像（支持 gpt-image 系列模型）",
+        "inputs": {
+            "prompt": {
+                "name": "提示词",
+                "tooltip": "用于生成或编辑图像的提示词"
+            },
+            "model": {
+                "name": "模型",
+                "tooltip": "OpenAI GPT 图像模型"
+            },
+            "size": {
+                "name": "图像尺寸",
+                "tooltip": "输出图像尺寸。选择 'Custom' 可自定义宽高"
+            },
+            "custom_width": {
+                "name": "自定义宽度",
+                "tooltip": "仅在尺寸选择 'Custom' 时生效，必须为 16 的倍数"
+            },
+            "custom_height": {
+                "name": "自定义高度",
+                "tooltip": "仅在尺寸选择 'Custom' 时生效，必须为 16 的倍数"
+            },
+            "quality": {
+                "name": "质量",
+                "tooltip": "图像质量等级（auto、low、medium、high）"
+            },
+            "background": {
+                "name": "背景",
+                "tooltip": "输出图像背景模式。'transparent' 可输出带透明通道的 PNG 图像"
+            },
+            "n": {
+                "name": "生成数量",
+                "tooltip": "生成的图像数量（1 到 10）"
+            },
+            "seed": {
+                "name": "随机种子",
+                "tooltip": "用于生成图像的随机种子"
+            },
+            "images": {
+                "name": "参考图像",
+                "tooltip": "可选的参考图像，用于图生图或图像编辑（最多支持 16 张图）"
+            },
+            "mask": {
+                "name": "遮罩掩码",
+                "tooltip": "可选的局部重绘遮罩（白色区域为重绘修改区域，需配合单张参考图使用）"
+            },
+            "config_options": {
+                "name": "配置选项",
+                "tooltip": "来自 YCYY API 配置选项的可选配置覆盖"
+            },
+            "proxy_options": {
+                "name": "代理选项",
+                "tooltip": "来自 YCYY API 代理选项的可选代理覆盖"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "图像"
+            },
+            "1": {
+                "name": "信息"
+            }
+        }
+    },
     "YCYY_Preview_API_Result": {
         "display_name": "Preview API Result",
         "description": "将文本渲染为 Markdown 网页预览，并支持复制。",

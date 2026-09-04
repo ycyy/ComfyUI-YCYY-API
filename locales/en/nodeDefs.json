@@ -65,6 +65,72 @@
             }
         }
     },
+    "YCYY_OpenAI_Image_API": {
+        "display_name": "OpenAI Image API",
+        "description": "Generate or edit images using the OpenAI Image API (supports gpt-image model series)",
+        "inputs": {
+            "prompt": {
+                "name": "prompt",
+                "tooltip": "Text prompt used to generate or edit the image"
+            },
+            "model": {
+                "name": "model",
+                "tooltip": "OpenAI GPT image model"
+            },
+            "size": {
+                "name": "size",
+                "tooltip": "Output image size. Select 'Custom' to specify custom width and height"
+            },
+            "custom_width": {
+                "name": "custom width",
+                "tooltip": "Used only when size is 'Custom'. Must be a multiple of 16"
+            },
+            "custom_height": {
+                "name": "custom height",
+                "tooltip": "Used only when size is 'Custom'. Must be a multiple of 16"
+            },
+            "quality": {
+                "name": "quality",
+                "tooltip": "Image quality level (auto, low, medium, high)"
+            },
+            "background": {
+                "name": "background",
+                "tooltip": "Return image with or without background. 'transparent' outputs PNG with alpha transparency"
+            },
+            "n": {
+                "name": "n",
+                "tooltip": "Number of images to generate (1 to 10)"
+            },
+            "seed": {
+                "name": "seed",
+                "tooltip": "Random seed for generation"
+            },
+            "images": {
+                "name": "images",
+                "tooltip": "Optional reference image(s) for image editing. GPT image models support up to 16 images"
+            },
+            "mask": {
+                "name": "mask",
+                "tooltip": "Optional mask for inpainting (white areas will be replaced). Requires exactly one reference image"
+            },
+            "config_options": {
+                "name": "config options",
+                "tooltip": "Optional configuration override from YCYY API Config Options"
+            },
+            "proxy_options": {
+                "name": "proxy options",
+                "tooltip": "Optional proxy configuration override from YCYY API Proxy Options"
+            }
+        },
+        "outputs": {
+            "0": {
+                "name": "image"
+            },
+            "1": {
+                "name": "info"
+            }
+        }
+    },
     "YCYY_Preview_API_Result": {
         "display_name": "Preview API Result",
         "description": "Render text as a Markdown preview with copy support.",

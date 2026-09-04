@@ -17,6 +17,7 @@ from .options.gemini_speaker_options_node import *
 from .options.gemini_batch_speakers_options_node import *
 from .options.proxy_options_node import *
 from .openai.openai_text_node import *
+from .openai.openai_image_node import *
 from .options.openai_text_advanced_options_node import *
 from .options.openai_text_skill_options_node import *
 from .images.image_compare import ImageCompare
@@ -45,6 +46,7 @@ class APIExtension(ComfyExtension):
             OllamaLLMAdvanceOptions, 
             ImageCompare,
             OpenAITextAPI,
+            OpenAIImageAPI,
             OpenAITextAdvancedOptions,
             OpenAITextSkillOptions,
             PreviewAPIResult,
