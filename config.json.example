@@ -39,17 +39,20 @@
             "gpt-image-1-mini"
         ]
     },
-    "grok-image": {
-        "base_url": "https://api.x.ai/v1",
-        "api_key": "put your key here",
-        "timeout": 120,
-        "models": [
-            "grok-imagine-image-2.0",
-            "grok-imagine-image-quality",
-            "grok-imagine-image-pro",
-            "grok-imagine-image"
-        ]
-    },
+    "grok-image": [
+        {
+            "api-name": "xAI Official",
+            "base_url": "https://api.x.ai/v1",
+            "api_key": "put your key here",
+            "timeout": 120,
+            "models": [
+                "grok-imagine-image-2.0",
+                "grok-imagine-image-quality",
+                "grok-imagine-image-pro",
+                "grok-imagine-image"
+            ]
+        }
+    ],
     "gemini-image": {
         "base_url": "https://generativelanguage.googleapis.com/v1beta/models",
         "api_key": "put your key here",

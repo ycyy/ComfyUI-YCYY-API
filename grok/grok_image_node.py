@@ -8,8 +8,56 @@ from PIL import Image
 from io import BytesIO
 from typing import Optional, List, Dict, Any, Tuple
 from comfy_api.latest import ComfyExtension, io
-from ..utils.image_utils import tensor_to_base64_string
-from ..utils.config_utils import get_config_section
+try:
+    from ..utils.image_utils import tensor_to_base64_string
+    from ..utils.config_utils import (
+        DEFAULT_GROK_MODELS,
+        get_config_section,
+        get_grok_apis,
+        get_grok_api_names,
+        get_grok_api_config,
+    )
+except (ImportError, ValueError):
+    try:
+        from utils.image_utils import tensor_to_base64_string
+        from utils.config_utils import (
+            DEFAULT_GROK_MODELS,
+            get_config_section,
+            get_grok_apis,
+            get_grok_api_names,
+            get_grok_api_config,
+        )
+    except (ImportError, ValueError):
+        import sys
+        from pathlib import Path
+        _root = str(Path(__file__).resolve().parent.parent)
+        if _root not in sys.path:
+            sys.path.insert(0, _root)
+        from utils.image_utils import tensor_to_base64_string
+        from utils.config_utils import (
+            DEFAULT_GROK_MODELS,
+            get_config_section,
+            get_grok_apis,
+            get_grok_api_names,
+            get_grok_api_config,
+        )
+
+
+try:
+    from aiohttp import web
+    from server import PromptServer
+
+    @PromptServer.instance.routes.get("/ycyy/grok/apis/all")
+    async def get_all_grok_apis(request):
+        try:
+            return web.json_response([
+                {"api-name": item["api-name"], "models": item["models"]}
+                for item in get_grok_apis()
+            ])
+        except Exception as exc:
+            return web.json_response({"error": str(exc)}, status=500)
+except Exception:
+    pass
 
 
 DEFAULT_MODELS = [
@@ -26,95 +74,70 @@ class GrokImage(io.ComfyNode):
     """
 
     @classmethod
-    def _load_models_from_config(cls) -> List[str]:
+    def _load_models_from_config(cls, api_name: Optional[str] = None) -> List[str]:
         """
-        从 config.json 中加载模型列表
-        如果获取不到，返回默认模型列表
+        从配置中加载模型列表。
+        如果指定了 api_name，返回该渠道的模型；
+        否则返回所有渠道的模型并集；如果为空则返回 DEFAULT_MODELS。
         """
         try:
-            config_path = os.path.join(os.path.dirname(__file__), '..', "config.json")
-            if not os.path.exists(config_path):
-                return DEFAULT_MODELS
-
-            with open(config_path, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-
-            if 'grok-image' in config and 'models' in config['grok-image']:
-                models = config['grok-image']['models']
-                if isinstance(models, list) and len(models) > 0:
-                    return models
-
-            return DEFAULT_MODELS
+            apis = get_grok_apis()
+            if api_name:
+                for item in apis:
+                    if item["api-name"] == api_name:
+                        models = item.get("models", DEFAULT_MODELS)
+                        return models if models else DEFAULT_MODELS
+            models = list(dict.fromkeys(model for item in apis for model in item.get("models", [])))
+            return models if models else DEFAULT_MODELS
         except Exception:
             return DEFAULT_MODELS
 
     @classmethod
-    def _load_config_credentials(cls, config_options: Optional[dict] = None) -> Tuple[str, str, int]:
+    def _load_config_credentials(
+        cls,
+        api_name: Optional[str] = None,
+        config_options: Optional[dict] = None
+    ) -> Tuple[str, str, int]:
         """
-        从 config.json 中加载并验证 API 凭据，如果提供了 config_options 则优先使用
-        返回 (base_url, api_key, timeout) 元组
+        从配置中加载指定 api_name 的 API 凭据，如果提供了 config_options 则优先使用其覆盖值。
+        返回 (base_url, api_key, timeout) 元组。
         """
-        # 如果提供了配置覆盖，则使用覆盖配置
-        if config_options is not None:
-            base_url = config_options.get('base_url', '').strip()
-            api_key = config_options.get('api_key', '').strip()
-            timeout = config_options.get('timeout', 120)
-
-            # 如果覆盖配置中有有效的 base_url 和 api_key，则直接返回
-            if base_url and api_key:
-                return base_url, api_key, timeout
-
-        # 否则从配置文件加载
-        config_path = os.path.join(os.path.dirname(__file__), '..', "config.json")
-
-        # 检查配置文件是否存在
-        if not os.path.exists(config_path):
-            raise FileNotFoundError(f"Config file not found: {config_path}")
-
         try:
-            with open(config_path, 'r', encoding='utf-8') as f:
-                config = json.load(f)
+            api_cfg = get_grok_api_config(api_name)
+        except Exception:
+            apis = get_grok_apis()
+            api_cfg = apis[0] if apis else {
+                "base_url": "https://api.x.ai/v1",
+                "api_key": "",
+                "timeout": 120
+            }
 
-            # 检查是否存在 grok-image 配置段
-            if 'grok-image' not in config:
-                raise ValueError("Missing 'grok-image' section in config file")
+        base_url = str(api_cfg.get("base_url", "https://api.x.ai/v1")).strip() or "https://api.x.ai/v1"
+        api_key = str(api_cfg.get("api_key", "")).strip()
+        timeout = api_cfg.get("timeout", 120)
 
-            grok_config = config['grok-image']
+        if isinstance(config_options, dict):
+            override_url = config_options.get("base_url")
+            if isinstance(override_url, str) and override_url.strip():
+                base_url = override_url.strip()
 
-            # 获取并验证 base_url (默认 https://api.x.ai/v1)
-            base_url = grok_config.get('base_url', 'https://api.x.ai/v1')
-            base_url = base_url.strip() if isinstance(base_url, str) else str(base_url).strip()
-            if not base_url:
-                base_url = "https://api.x.ai/v1"
+            override_key = config_options.get("api_key")
+            if isinstance(override_key, str) and override_key.strip():
+                api_key = override_key.strip()
 
-            # 获取并验证 api_key
-            if 'api_key' not in grok_config:
-                raise ValueError("Missing 'api_key' in grok-image section")
-            api_key = grok_config['api_key'].strip() if isinstance(grok_config['api_key'], str) else str(grok_config['api_key']).strip()
-            if not api_key:
-                raise ValueError("api_key cannot be empty")
-
-            # 获取 timeout 参数，默认值为 120 秒
-            timeout = grok_config.get('timeout', 120)
-            if isinstance(timeout, str):
+            override_timeout = config_options.get("timeout")
+            if override_timeout not in (None, "") and not isinstance(override_timeout, bool):
                 try:
-                    timeout = int(timeout)
-                except ValueError:
-                    timeout = 120
+                    candidate = int(override_timeout)
+                    if candidate > 0:
+                        timeout = candidate
+                except (TypeError, ValueError):
+                    pass
 
-            # 如果有配置覆盖，则使用覆盖的值（如果提供了）
-            if config_options is not None:
-                if config_options.get('base_url', '').strip():
-                    base_url = config_options['base_url'].strip()
-                if config_options.get('api_key', '').strip():
-                    api_key = config_options['api_key'].strip()
-                if config_options.get('timeout'):
-                    timeout = config_options['timeout']
+        if not api_key:
+            raise ValueError("api_key cannot be empty. Please configure it in config.json or provide it via config_options.")
 
-            return base_url, api_key, timeout
-
-        except Exception as e:
-            raise ValueError(f"Config loading error: {str(e)}")
+        return base_url, api_key, timeout
 
     @classmethod
     def _get_proxy_config(cls, proxy_options: Optional[dict] = None) -> Optional[Dict[str, str]]:
@@ -156,8 +179,17 @@ class GrokImage(io.ComfyNode):
         """
         返回 GrokImage 节点 schema
         """
-        model_options = cls._load_models_from_config()
-        default_model = model_options[0]
+        try:
+            apis = get_grok_apis()
+            names = [item["api-name"] for item in apis]
+            models = list(dict.fromkeys(model for item in apis for model in item.get("models", [])))
+        except Exception:
+            names = ["default"]
+            models = list(DEFAULT_MODELS)
+        if not names:
+            names = ["default"]
+        if not models:
+            models = list(DEFAULT_MODELS)
 
         return io.Schema(
             node_id="YCYY_Grok_Image_API",
@@ -185,9 +217,15 @@ class GrokImage(io.ComfyNode):
                     tooltip="The text prompt used to generate or edit the image"
                 ),
                 io.Combo.Input(
+                    id="api_name",
+                    options=names,
+                    default=names[0],
+                    tooltip="Select Grok API channel"
+                ),
+                io.Combo.Input(
                     id="model",
-                    options=model_options,
-                    default=default_model,
+                    options=models,
+                    default=models[0],
                     tooltip="Grok image model"
                 ),
                 io.Combo.Input(
@@ -264,12 +302,14 @@ class GrokImage(io.ComfyNode):
         quality: str,
         number_of_images: int,
         seed: int,
+        api_name: Optional[str] = None,
         images: Optional[torch.Tensor] = None,
         config_options: Optional[dict] = None,
-        proxy_options: Optional[dict] = None
+        proxy_options: Optional[dict] = None,
+        **kwargs
     ) -> io.NodeOutput:
         # 加载配置和凭据，如果提供了 config_options 则使用覆盖配置
-        base_url, api_key, timeout = cls._load_config_credentials(config_options)
+        base_url, api_key, timeout = cls._load_config_credentials(api_name=api_name, config_options=config_options)
         # 获取代理配置，如果提供了 proxy_options 则使用覆盖配置
         proxies = cls._get_proxy_config(proxy_options)
 

@@ -176,10 +176,10 @@ class OpenAITextAPI(io.ComfyNode):
             display_name="OpenAI Text API",
             category="YCYY/API/text",
             inputs=[
-                io.Combo.Input(id="api_name", options=names, default=names[0]),
-                io.Combo.Input(id="model", options=models, default=models[0]),
                 io.String.Input(id="system_prompt", multiline=True, default=""),
                 io.String.Input(id="user_prompt", multiline=True),
+                io.Combo.Input(id="api_name", options=names, default=names[0]),
+                io.Combo.Input(id="model", options=models, default=models[0]),
                 io.Boolean.Input(id="persist_context", default=True),
                 io.Boolean.Input(id="clear_history", default=False),
                 io.Boolean.Input(
