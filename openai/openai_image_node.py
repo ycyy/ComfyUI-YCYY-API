@@ -9,11 +9,23 @@ from io import BytesIO
 from typing import Optional, List, Dict, Any, Tuple
 from comfy_api.latest import io
 try:
-    from ..utils.config_utils import get_config_section
+    from ..utils.config_utils import (
+        DEFAULT_OPENAI_IMAGE_MODELS,
+        get_config_section,
+        get_openai_image_apis,
+        get_openai_image_api_names,
+        get_openai_image_api_config,
+    )
     from ..utils.image_utils import downscale_image_tensor, common_upscale
 except (ImportError, ValueError):
     try:
-        from utils.config_utils import get_config_section
+        from utils.config_utils import (
+            DEFAULT_OPENAI_IMAGE_MODELS,
+            get_config_section,
+            get_openai_image_apis,
+            get_openai_image_api_names,
+            get_openai_image_api_config,
+        )
         from utils.image_utils import downscale_image_tensor, common_upscale
     except (ImportError, ValueError):
         import sys
@@ -21,8 +33,31 @@ except (ImportError, ValueError):
         _root = str(Path(__file__).resolve().parent.parent)
         if _root not in sys.path:
             sys.path.insert(0, _root)
-        from utils.config_utils import get_config_section
+        from utils.config_utils import (
+            DEFAULT_OPENAI_IMAGE_MODELS,
+            get_config_section,
+            get_openai_image_apis,
+            get_openai_image_api_names,
+            get_openai_image_api_config,
+        )
         from utils.image_utils import downscale_image_tensor, common_upscale
+
+
+try:
+    from aiohttp import web
+    from server import PromptServer
+
+    @PromptServer.instance.routes.get("/ycyy/openai-image/apis/all")
+    async def get_all_openai_image_apis(request):
+        try:
+            return web.json_response([
+                {"api-name": item["api-name"], "models": item["models"]}
+                for item in get_openai_image_apis()
+            ])
+        except Exception as exc:
+            return web.json_response({"error": str(exc)}, status=500)
+except Exception:
+    pass
 
 
 DEFAULT_MODELS = [
@@ -40,34 +75,32 @@ class OpenAIImageAPI(io.ComfyNode):
     """
 
     @classmethod
-    def _load_models_from_config(cls) -> List[str]:
+    def _load_models_from_config(cls, api_name: Optional[str] = None) -> List[str]:
         """
-        Load model list from config.json 'openai-image' section.
-        Falls back to DEFAULT_MODELS if not configured.
+        从配置中加载模型列表。
+        如果指定了 api_name，返回该渠道的模型；
+        否则返回所有渠道的模型并集；如果为空则返回 DEFAULT_MODELS。
         """
         try:
-            config_path = os.path.join(os.path.dirname(__file__), '..', "config.json")
-            if not os.path.exists(config_path):
-                return DEFAULT_MODELS
-
-            with open(config_path, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-
-            if 'openai-image' in config and 'models' in config['openai-image']:
-                models = config['openai-image']['models']
-                if isinstance(models, list) and len(models) > 0:
-                    clean_models = [str(m).strip() for m in models if str(m).strip()]
-                    if clean_models:
-                        return clean_models
-
-            return DEFAULT_MODELS
+            apis = get_openai_image_apis()
+            if api_name:
+                for item in apis:
+                    if item["api-name"] == api_name:
+                        models = item.get("models", DEFAULT_MODELS)
+                        return models if models else DEFAULT_MODELS
+            models = list(dict.fromkeys(model for item in apis for model in item.get("models", [])))
+            return models if models else DEFAULT_MODELS
         except Exception:
             return DEFAULT_MODELS
 
     @classmethod
-    def _load_config_credentials(cls, config_options: Optional[dict] = None) -> Tuple[str, str, int]:
+    def _load_config_credentials(
+        cls,
+        api_name: Optional[str] = None,
+        config_options: Optional[dict] = None
+    ) -> Tuple[str, str, int]:
         """
-        Load API credentials from config_options or config.json.
+        Load API credentials from config_options or multi-channel config.json.
         Returns (base_url, api_key, timeout) tuple.
         """
         # 1. Check runtime overrides from config_options
@@ -83,45 +116,39 @@ class OpenAIImageAPI(io.ComfyNode):
                     timeout = 120
                 return base_url, api_key, timeout
 
-        # 2. Check config.json 'openai-image' section
-        config_path = os.path.join(os.path.dirname(__file__), '..', "config.json")
-        base_url = "https://api.openai.com/v1"
-        api_key = ""
-        timeout = 120
+        # 2. Load from multi-channel config
+        try:
+            api_cfg = get_openai_image_api_config(api_name)
+        except Exception:
+            apis = get_openai_image_apis()
+            api_cfg = apis[0] if apis else {
+                "base_url": "https://api.openai.com/v1",
+                "api_key": "",
+                "timeout": 120
+            }
 
-        if os.path.exists(config_path):
+        base_url = str(api_cfg.get("base_url", "https://api.openai.com/v1")).strip() or "https://api.openai.com/v1"
+        api_key = str(api_cfg.get("api_key", "")).strip()
+        timeout = api_cfg.get("timeout", 120)
+        try:
+            timeout = int(timeout) if int(timeout) > 0 else 120
+        except (ValueError, TypeError):
+            timeout = 120
+
+        # Fallback to openai-text config if api_key not set
+        if not api_key:
             try:
-                with open(config_path, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
-
-                if 'openai-image' in config and isinstance(config['openai-image'], dict):
-                    img_cfg = config['openai-image']
-                    raw_base = img_cfg.get('base_url', '').strip()
-                    if raw_base:
-                        base_url = raw_base
-                    raw_key = img_cfg.get('api_key', '').strip()
-                    if raw_key:
-                        api_key = raw_key
-                    raw_timeout = img_cfg.get('timeout', 120)
-                    try:
-                        timeout = int(raw_timeout) if int(raw_timeout) > 0 else 120
-                    except (ValueError, TypeError):
-                        timeout = 120
-
-                # Fallback to openai-text config if api_key not set
-                if not api_key and 'openai-text' in config:
-                    text_cfg = config['openai-text']
-                    candidates = text_cfg if isinstance(text_cfg, list) else [text_cfg]
+                config = get_config_section('openai-text')
+                if config:
+                    candidates = config if isinstance(config, list) else [config]
                     for item in candidates:
                         if isinstance(item, dict) and item.get('api_key', '').strip():
                             api_key = item['api_key'].strip()
-                            # If openai-image base_url was default and text item has a base_url, adopt it
                             if base_url == "https://api.openai.com/v1" and item.get('base_url', '').strip():
                                 base_url = item['base_url'].strip()
                             break
-
-            except Exception as e:
-                raise ValueError(f"Config loading error: {str(e)}")
+            except Exception:
+                pass
 
         # 3. Check environment variable fallback
         if not api_key:
@@ -135,7 +162,9 @@ class OpenAIImageAPI(io.ComfyNode):
                 api_key = config_options['api_key'].strip()
             if config_options.get('timeout'):
                 try:
-                    timeout = int(config_options['timeout'])
+                    candidate = int(config_options['timeout'])
+                    if candidate > 0:
+                        timeout = candidate
                 except (ValueError, TypeError):
                     pass
 
@@ -174,8 +203,17 @@ class OpenAIImageAPI(io.ComfyNode):
 
     @classmethod
     def define_schema(cls) -> io.Schema:
-        model_options = cls._load_models_from_config()
-        default_model = model_options[0]
+        try:
+            apis = get_openai_image_apis()
+            names = [item["api-name"] for item in apis]
+            models = list(dict.fromkeys(model for item in apis for model in item.get("models", [])))
+        except Exception:
+            names = ["default"]
+            models = list(DEFAULT_MODELS)
+        if not names:
+            names = ["default"]
+        if not models:
+            models = list(DEFAULT_MODELS)
 
         return io.Schema(
             node_id="YCYY_OpenAI_Image_API",
@@ -188,9 +226,15 @@ class OpenAIImageAPI(io.ComfyNode):
                     tooltip="Text prompt used to generate or edit the image."
                 ),
                 io.Combo.Input(
+                    id="api_name",
+                    options=names,
+                    default=names[0],
+                    tooltip="Select OpenAI Image API channel"
+                ),
+                io.Combo.Input(
                     id="model",
-                    options=model_options,
-                    default=default_model,
+                    options=models,
+                    default=models[0],
                     tooltip="OpenAI GPT image model."
                 ),
                 io.Combo.Input(
@@ -333,16 +377,18 @@ class OpenAIImageAPI(io.ComfyNode):
         background: str,
         n: int,
         seed: int,
+        api_name: Optional[str] = None,
         images: Optional[torch.Tensor] = None,
         mask: Optional[torch.Tensor] = None,
         config_options: Optional[dict] = None,
         proxy_options: Optional[dict] = None,
+        **kwargs
     ) -> io.NodeOutput:
         if not prompt or not prompt.strip():
             raise ValueError("prompt cannot be empty")
 
         # Load credentials & proxies
-        base_url, api_key, timeout = cls._load_config_credentials(config_options)
+        base_url, api_key, timeout = cls._load_config_credentials(api_name=api_name, config_options=config_options)
         proxies = cls._get_proxy_config(proxy_options)
 
         # Normalize endpoints

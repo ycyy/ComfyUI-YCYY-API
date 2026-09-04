@@ -28,17 +28,20 @@
         ],
         "allow_call": false
     },
-    "openai-image": {
-        "base_url": "https://api.openai.com/v1",
-        "api_key": "put your key here",
-        "timeout": 120,
-        "models": [
-            "gpt-image-2",
-            "gpt-image-1.5",
-            "gpt-image-1",
-            "gpt-image-1-mini"
-        ]
-    },
+    "openai-image": [
+        {
+            "api-name": "OpenAI Official",
+            "base_url": "https://api.openai.com/v1",
+            "api_key": "put your key here",
+            "timeout": 120,
+            "models": [
+                "gpt-image-2",
+                "gpt-image-1.5",
+                "gpt-image-1",
+                "gpt-image-1-mini"
+            ]
+        }
+    ],
     "grok-image": [
         {
             "api-name": "xAI Official",

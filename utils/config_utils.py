@@ -233,3 +233,100 @@ def get_grok_api_config(api_name=None, section_key="grok-image"):
             return item
     raise ValueError(f"Unknown API name: {api_name}")
 
+
+DEFAULT_OPENAI_IMAGE_MODELS = [
+    "gpt-image-2",
+    "gpt-image-1.5",
+    "gpt-image-1",
+    "gpt-image-1-mini",
+]
+
+
+def get_openai_image_apis(section_key="openai-image"):
+    """Return normalized OpenAI Image API configurations.
+
+    ``openai-image`` is normally an array. A legacy single mapping is also
+    accepted so existing installations can migrate without breaking nodes.
+    """
+    raw = get_config_section(section_key)
+    if raw is None:
+        return [{
+            "api-name": "default",
+            "base_url": "https://api.openai.com/v1",
+            "api_key": "",
+            "timeout": 120,
+            "models": list(DEFAULT_OPENAI_IMAGE_MODELS),
+        }]
+    if isinstance(raw, dict):
+        raw_items = [raw]
+    elif isinstance(raw, list):
+        raw_items = raw
+    else:
+        raise ValueError(f"{section_key} must be an object or array")
+    if not raw_items:
+        raise ValueError(f"{section_key} cannot be empty")
+
+    result = []
+    names = set()
+    for index, item in enumerate(raw_items):
+        if not isinstance(item, dict):
+            raise ValueError(f"{section_key}[{index}] must be an object")
+        name = item.get("api-name") or item.get("api_name")
+        if not name:
+            if len(raw_items) == 1:
+                name = "default"
+            else:
+                raise ValueError(f"{section_key}[{index}] missing 'api-name'")
+        name = str(name).strip()
+        if not name:
+            raise ValueError(f"{section_key}[{index}] api-name cannot be empty")
+        if name in names:
+            raise ValueError(f"Duplicate api-name: {name}")
+        names.add(name)
+
+        base_url = str(item.get("base_url", "") or "https://api.openai.com/v1").strip()
+        if not base_url:
+            base_url = "https://api.openai.com/v1"
+
+        models = item.get("models")
+        if not isinstance(models, list) or not models:
+            models = list(DEFAULT_OPENAI_IMAGE_MODELS)
+        else:
+            models = [str(model).strip() for model in models if str(model).strip()]
+            if not models:
+                models = list(DEFAULT_OPENAI_IMAGE_MODELS)
+
+        timeout = item.get("timeout", 120)
+        try:
+            timeout = int(timeout)
+        except (TypeError, ValueError):
+            timeout = 120
+        if timeout <= 0:
+            timeout = 120
+
+        result.append({
+            "api-name": name,
+            "base_url": base_url,
+            "api_key": str(item.get("api_key", "") or "").strip(),
+            "timeout": timeout,
+            "models": models,
+        })
+    return result
+
+
+def get_openai_image_api_names(section_key="openai-image"):
+    return [item["api-name"] for item in get_openai_image_apis(section_key)]
+
+
+def get_openai_image_api_config(api_name=None, section_key="openai-image"):
+    apis = get_openai_image_apis(section_key)
+    if not apis:
+        raise ValueError(f"No configured APIs found in {section_key}")
+    if not api_name:
+        return apis[0]
+    for item in apis:
+        if item["api-name"] == api_name:
+            return item
+    raise ValueError(f"Unknown API name: {api_name}")
+
+
