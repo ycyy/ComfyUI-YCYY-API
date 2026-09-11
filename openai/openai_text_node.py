@@ -202,7 +202,7 @@ class OpenAITextAPI(io.ComfyNode):
                 ),
             ],
             outputs=[
-                io.String.Output(id="Result", display_name="Result"),
+                io.Custom("YCYY_API_RESULT").Output(id="Result", display_name="Result"),
                 io.String.Output(id="Conversation", display_name="Conversation"),
                 io.String.Output(id="SkillTrace", display_name="Skill Trace"),
             ],

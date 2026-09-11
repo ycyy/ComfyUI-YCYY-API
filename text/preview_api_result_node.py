@@ -11,11 +11,16 @@ class PreviewAPIResult(io.ComfyNode):
             display_name="Preview API Result",
             category="YCYY/API/utils",
             inputs=[
-                io.String.Input(
-                    id="source",
-                    force_input=True,
-                    multiline=True,
-                    tooltip="Markdown or plain text to preview",
+                io.MultiType.Input(
+                    io.String.Input(
+                        id="source",
+                        force_input=True,
+                        multiline=True,
+                        tooltip="Markdown or plain text to preview",
+                    ),
+                    types=[
+                        io.Custom("YCYY_API_RESULT"),
+                    ],
                 ),
             ],
             outputs=[io.String.Output(id="text", display_name="text")],
