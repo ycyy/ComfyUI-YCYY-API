@@ -330,3 +330,106 @@ def get_openai_image_api_config(api_name=None, section_key="openai-image"):
     raise ValueError(f"Unknown API name: {api_name}")
 
 
+DEFAULT_MODELSCOPE_IMAGE_MODELS = [
+    "Tongyi-MAI/Z-Image-Turbo",
+    "black-forest-labs/FLUX.1-Krea-dev",
+    "Qwen/Qwen-Image-2512",
+    "ideogram-ai/ideogram-4-fp8",
+    "krea/Krea-2-Turbo",
+    "Qwen/Qwen-Image-Edit-2511",
+    "black-forest-labs/FLUX.2-klein-9B",
+    "FireRedTeam/FireRed-Image-Edit-1.1",
+]
+
+
+def get_modelscope_image_apis(section_key="modelscope-image"):
+    """Return normalized ModelScope image API configurations.
+
+    ``modelscope-image`` is normally an array. A legacy single mapping is also
+    accepted so existing generation configurations keep working after the
+    generation and editing nodes are merged.
+    """
+    raw = get_config_section(section_key)
+    if raw is None:
+        return [{
+            "api-name": "default",
+            "base_url": "https://api-inference.modelscope.cn",
+            "api_key": "",
+            "timeout": 300,
+            "models": list(DEFAULT_MODELSCOPE_IMAGE_MODELS),
+        }]
+    if isinstance(raw, dict):
+        raw_items = [raw]
+    elif isinstance(raw, list):
+        raw_items = raw
+    else:
+        raise ValueError(f"{section_key} must be an object or array")
+    if not raw_items:
+        raise ValueError(f"{section_key} cannot be empty")
+
+    result = []
+    names = set()
+    for index, item in enumerate(raw_items):
+        if not isinstance(item, dict):
+            raise ValueError(f"{section_key}[{index}] must be an object")
+
+        name = item.get("api-name") or item.get("api_name")
+        if not name:
+            if len(raw_items) == 1:
+                name = "default"
+            else:
+                raise ValueError(f"{section_key}[{index}] missing 'api-name'")
+        name = str(name).strip()
+        if not name:
+            raise ValueError(f"{section_key}[{index}] api-name cannot be empty")
+        if name in names:
+            raise ValueError(f"Duplicate api-name: {name}")
+        names.add(name)
+
+        base_url = str(
+            item.get("base_url", "") or "https://api-inference.modelscope.cn"
+        ).strip()
+        if not base_url:
+            base_url = "https://api-inference.modelscope.cn"
+
+        models = item.get("models")
+        if not isinstance(models, list) or not models:
+            models = list(DEFAULT_MODELSCOPE_IMAGE_MODELS)
+        else:
+            models = [str(model).strip() for model in models if str(model).strip()]
+            if not models:
+                models = list(DEFAULT_MODELSCOPE_IMAGE_MODELS)
+
+        timeout = item.get("timeout", 300)
+        try:
+            timeout = int(timeout)
+        except (TypeError, ValueError):
+            timeout = 300
+        if timeout <= 0:
+            timeout = 300
+
+        result.append({
+            "api-name": name,
+            "base_url": base_url,
+            "api_key": str(item.get("api_key", "") or "").strip(),
+            "timeout": timeout,
+            "models": models,
+        })
+    return result
+
+
+def get_modelscope_image_api_names(section_key="modelscope-image"):
+    return [item["api-name"] for item in get_modelscope_image_apis(section_key)]
+
+
+def get_modelscope_image_api_config(api_name=None, section_key="modelscope-image"):
+    apis = get_modelscope_image_apis(section_key)
+    if not apis:
+        raise ValueError(f"No configured APIs found in {section_key}")
+    if not api_name:
+        return apis[0]
+    for item in apis:
+        if item["api-name"] == api_name:
+            return item
+    raise ValueError(f"Unknown API name: {api_name}")
+

@@ -23,7 +23,9 @@ git clone https://github.com/ycyy/ComfyUI-YCYY-API.git
 
 ### modelscope-image
 
-魔搭图片生成接口只需要填写对应的 `api_key` 其他参数保持不变即可
+`modelscope-image` 使用数组配置多个魔搭图片 API name。图片生成和图片编辑共用一个节点：不连接 `image` 时生成图片，连接 `image` 时编辑图片。建议分别创建生成和编辑两个 `api-name`，并在各自的 `models` 中配置对应类型的模型；切换 `api-name` 后节点会同步更新模型列表。
+
+旧版单对象 `modelscope-image` 配置仍可使用，其 api name 显示为 `default`。原 `modelscope-image-edit` 配置需要迁移为 `modelscope-image` 数组中的独立配置项。通常只需要填写对应的 `api_key`，其他官方接口参数保持示例值即可。
 
 ### openai-text
 

@@ -109,28 +109,32 @@
             "gpt-oss:120b"
         ]
     },
-    "modelscope-image": {
-        "base_url": "https://api-inference.modelscope.cn",
-        "api_key": "put your token here",
-        "timeout": 300,
-        "models": [
-            "Tongyi-MAI/Z-Image-Turbo",
-            "black-forest-labs/FLUX.1-Krea-dev",
-            "Qwen/Qwen-Image-2512",
-            "ideogram-ai/ideogram-4-fp8",
-            "krea/Krea-2-Turbo"
-        ]
-    },
-    "modelscope-image-edit": {
-        "base_url": "https://api-inference.modelscope.cn",
-        "api_key": "put your token here",
-        "timeout": 300,
-        "models": [
-            "Qwen/Qwen-Image-Edit-2511",
-            "black-forest-labs/FLUX.2-klein-9B",
-            "FireRedTeam/FireRed-Image-Edit-1.1"
-        ]
-    },
+    "modelscope-image": [
+        {
+            "api-name": "ModelScope Image Generation",
+            "base_url": "https://api-inference.modelscope.cn",
+            "api_key": "put your token here",
+            "timeout": 300,
+            "models": [
+                "Tongyi-MAI/Z-Image-Turbo",
+                "black-forest-labs/FLUX.1-Krea-dev",
+                "Qwen/Qwen-Image-2512",
+                "ideogram-ai/ideogram-4-fp8",
+                "krea/Krea-2-Turbo"
+            ]
+        },
+        {
+            "api-name": "ModelScope Image Editing",
+            "base_url": "https://api-inference.modelscope.cn",
+            "api_key": "put your token here",
+            "timeout": 300,
+            "models": [
+                "Qwen/Qwen-Image-Edit-2511",
+                "black-forest-labs/FLUX.2-klein-9B",
+                "FireRedTeam/FireRed-Image-Edit-1.1"
+            ]
+        }
+    ],
     "proxy": {
         "enable": false,
         "http": "",

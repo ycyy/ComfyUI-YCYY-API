@@ -23,7 +23,9 @@ git clone https://github.com/ycyy/ComfyUI-YCYY-API.git
 
 ### modelscope-image
 
-The ModelScope image generation interface only requires you to fill in the corresponding `api_key`. Other parameters remain unchanged.
+`modelscope-image` uses an array to configure multiple ModelScope image API names. Image generation and editing share one node: leave `image` disconnected to generate an image, or connect it to edit an image. We recommend separate generation and editing `api-name` entries, each with the appropriate models. Changing `api-name` updates the node's model list.
+
+Legacy single-object `modelscope-image` configurations remain supported and use `default` as the api name. Move the former `modelscope-image-edit` settings into a separate entry in the `modelscope-image` array. For the official endpoint, normally only the corresponding `api_key` needs to be changed from the example.
 
 ### openai-text
 
