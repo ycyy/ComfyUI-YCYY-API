@@ -31,7 +31,7 @@ class ProxyOptions(io.ComfyNode):
                 )
             ],
             outputs=[
-                io.AnyType.Output(
+                io.Custom("YCYY_API_PROXY_OPTIONS").Output(
                     id="proxy_options",
                     display_name="proxy_options",
                     tooltip="Override proxy options"

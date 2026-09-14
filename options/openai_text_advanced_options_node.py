@@ -23,7 +23,13 @@ class OpenAITextAdvancedOptions(io.ComfyNode):
                     ),
                 ),
             ],
-            outputs=[io.AnyType.Output(id="advanced_options", display_name="advanced_options")],
+            outputs=[
+                io.Custom("YCYY_OPENAI_TEXT_ADVANCED_OPTIONS").Output(
+                    id="advanced_options",
+                    display_name="advanced_options",
+                    tooltip="Advanced request parameters for OpenAI Text API",
+                )
+            ],
             description="Pass custom JSON parameters to the OpenAI Text API.",
         )
 

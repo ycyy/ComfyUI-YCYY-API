@@ -103,7 +103,7 @@ class OllamaLLMAdvanceOptions(io.ComfyNode):
                 )   
             ],
             outputs=[
-                io.AnyType.Output(
+                io.Custom("YCYY_OLLAMA_LLM_ADVANCED_OPTIONS").Output(
                     id="advanced_options",
                     display_name="advanced_options",
                     tooltip="Optional configuration for the model."

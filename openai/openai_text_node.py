@@ -192,10 +192,22 @@ class OpenAITextAPI(io.ComfyNode):
                 ),
                 io.Image.Input("images", optional=True, tooltip="Optional image input"),
                 io.Video.Input("videos", optional=True, tooltip="Optional video input"),
-                io.AnyType.Input(id="config_options", optional=True),
-                io.AnyType.Input(id="proxy_options", optional=True),
-                io.AnyType.Input(id="advanced_options", optional=True),
-                io.AnyType.Input(
+                io.Custom("YCYY_API_CONFIG_OPTIONS").Input(
+                    id="config_options",
+                    optional=True,
+                    tooltip="Optional input from API Config Options",
+                ),
+                io.Custom("YCYY_API_PROXY_OPTIONS").Input(
+                    id="proxy_options",
+                    optional=True,
+                    tooltip="Optional input from API Proxy Options",
+                ),
+                io.Custom("YCYY_OPENAI_TEXT_ADVANCED_OPTIONS").Input(
+                    id="advanced_options",
+                    optional=True,
+                    tooltip="Optional input from OpenAI Text Advanced Options",
+                ),
+                io.Custom("YCYY_OPENAI_TEXT_SKILL_OPTIONS").Input(
                     id="skill_options",
                     optional=True,
                     tooltip="Optional input from OpenAI Text Skill Options",

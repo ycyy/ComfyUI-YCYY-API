@@ -190,12 +190,12 @@ class GeminiTTS(io.ComfyNode):
                     multiline=True,
                     tooltip="The text to convert to speech.You can control style, tone, accent, and pace using natural language prompts.For example:Say in an spooky whisper:\"By the pricking of my thumbs...Something wicked this way comes\""
                 ),
-                io.AnyType.Input(
+                io.Custom("YCYY_API_CONFIG_OPTIONS").Input(
                     id="config_options",
                     optional=True,
                     tooltip="Optional configuration override from YCYY Gemini TTS Config Options"
                 ),
-                io.AnyType.Input(
+                io.Custom("YCYY_API_PROXY_OPTIONS").Input(
                     id="proxy_options",
                     optional=True,
                     tooltip="Optional proxy configuration override from YCYY Proxy Config Options"

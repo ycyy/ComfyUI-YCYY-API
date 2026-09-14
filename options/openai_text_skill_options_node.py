@@ -41,7 +41,7 @@ class OpenAITextSkillOptions(io.ComfyNode):
                 ),
             ],
             outputs=[
-                io.AnyType.Output(
+                io.Custom("YCYY_OPENAI_TEXT_SKILL_OPTIONS").Output(
                     id="skill_options",
                     display_name="skill_options",
                     tooltip="Progressive local Skill configuration for OpenAI Text API.",

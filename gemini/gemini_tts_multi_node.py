@@ -28,12 +28,12 @@ class GeminiTTSMulti(io.ComfyNode):
                     multiline=True,
                     tooltip="Conversation text. Include speaker labels that match the configured speaker names."
                 ),
-                io.AnyType.Input(
+                io.Custom("YCYY_API_CONFIG_OPTIONS").Input(
                     id="config_options",
                     optional=True,
                     tooltip="Optional configuration override from YCYY Gemini TTS Config Options"
                 ),
-                io.AnyType.Input(
+                io.Custom("YCYY_API_PROXY_OPTIONS").Input(
                     id="proxy_options",
                     optional=True,
                     tooltip="Optional proxy configuration override from YCYY Proxy Config Options"

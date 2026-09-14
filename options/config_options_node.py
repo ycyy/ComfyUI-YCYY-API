@@ -55,7 +55,7 @@ class ConfigOptions(io.ComfyNode):
                 )
             ],
             outputs=[
-                io.AnyType.Output(
+                io.Custom("YCYY_API_CONFIG_OPTIONS").Output(
                     id="config_options",
                     display_name="config_options",
                     tooltip="Override configuration options"
