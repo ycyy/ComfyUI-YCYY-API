@@ -19,6 +19,9 @@ class PreviewAPIResult(io.ComfyNode):
                         tooltip="Markdown or plain text to preview",
                     ),
                     types=[
+                        io.Float,
+                        io.Int,
+                        io.Boolean,
                         io.Custom("YCYY_API_RESULT"),
                     ],
                 ),
