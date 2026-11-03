@@ -537,8 +537,7 @@ class OpenAIImageAPI(io.ComfyNode):
             # Scale reference image down to <= 2048x2048 if needed
             scaled_img = downscale_image_tensor(single_img, total_pixels=2048 * 2048)
             img_bytes = cls._tensor_to_png_bytes(scaled_img)
-            field_name = "image" if len(flat_images) == 1 else "image[]"
-            files.append((field_name, (f"image_{i}.png", img_bytes, "image/png")))
+            files.append(("image", (f"image_{i}.png", img_bytes, "image/png")))
 
         # Process mask if provided
         if mask is not None:
